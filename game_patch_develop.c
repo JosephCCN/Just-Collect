@@ -83,13 +83,133 @@ char player_ac[1000];
 int map_lower_x , map_lower_y;
 int mode = 1;
 
-
 int find_lv(int v){
 	v = v / 100;
 	float a = (-1 + sqrt(1 + 8 * v))/2; //quard equation
 	int re = a;
 	return re;
 }
+
+int admin_page_class(int line){
+	printf("Please select:\n");
+	printf("Check all players information\n");
+	printf("Search player information\n");
+	printf("Change player data\n");
+	printf("Delete player account\n");
+	printf("Exit");
+	char cmd;
+	int services = 5;
+	
+	do{
+		gotoxy(30 , line);
+		putchar('<');
+		cmd = getch();
+		cmd = tolower(cmd);
+		if(cmd == 'w' && line > 1){
+			gotoxy(30 , line);
+			putchar(' ');
+			line--;
+		}
+		else if(cmd == 's' && line < services){
+			gotoxy(30 , line);
+			putchar(' ');
+			line++;
+		}
+	}while(cmd != '\r');
+	cls;
+	return line;
+}
+
+void admin_page(){
+	cls;
+	int choose = 1;
+	do{
+		choose = admin_page_class(choose);
+		if(choose == 1){  //check all player information
+			printf("Username..........Password\n");
+			FILE *file;
+			file = fopen("player_list.txt" , "r");
+			char name[10005];
+			while(fscanf(file , "%s" , name) != EOF){
+				printf("%s" , name);
+				FILE *fp;
+				strcat(name , ".txt");
+				fp = fopen(name , "r");
+				char password[10005];
+				fscanf(fp , "%s\n" , password);
+				fclose(fp);
+				for(int i=0;i<30 - strlen(name) - strlen(password);i++){
+					putchar('.');
+				}
+				puts(password);
+			} 
+			fclose(file);
+			pause;
+			cls;
+		}
+		else if(choose == 2){
+			printf("Please enter which player you want to search:");
+			char input[10005];
+			scanf("%s" , input);
+			char tmp[10005];
+			strcpy(tmp , input);
+			strcat(input , ".txt");
+			cls;
+			if(!fopen(input , "r")){
+				printf("No such player..");
+				Sleep(500);
+				cls;
+				continue;
+			}
+			FILE *fp;
+			fp = fopen(input , "r");
+			printf("Player %s:\n" , tmp);
+			char password[1005];
+			fscanf(fp , "%s\n" , password);
+			printf("Password: %s\n" , password);
+			int k;
+			fscanf(fp , "%d\n" , &k);
+			printf("Exp:%d   Lv.:%d\n" , k , find_lv(k));
+			puts("Alphabet:");
+			for(int i=0;i<26;i++){
+				int num;
+				fscanf(fp , "%d\n" , &num);
+				printf("%c...%d\n" , 'A' + i,num);
+			}
+			int a , b;
+			puts("Hunting part:");
+			fscanf(fp , "%d\n%d\n" , &a , &b);
+			printf("Attack Power:%d Health:%d\n" , a , b);
+			fclose(fp);
+			puts("Mining Part:");
+			strcat(tmp , "_2.txt");
+			fp = fopen(tmp , "r");
+			for(int i=0;i<type_of_core;i++){
+				int k;
+				fscanf(fp , "%d\n" , &k);
+				printf("%s\t%d\n" , ore_code[i+1] , k);
+			}
+			fclose(fp);
+			pause;
+			cls;
+		}
+		else if(choose == 3){
+			printf("I am so lazy, therefore I will make it later\n");
+			pause;
+			cls;
+		} 
+		else if(choose == 4){
+			printf("I am so lazy, therefore I will make it later\n");
+			pause;
+			cls;
+		}
+	}while(choose != 5);
+	puts("Bye...");
+	Sleep(500);
+	cls;
+}
+
+
 
 PLAYER exp_up(PLAYER player , int v){
 	int a = find_lv(player.lv);
@@ -246,19 +366,24 @@ bool login_class(){
 	char cmd;
 	int selector = 1;
 	int i;
-	
+	printf("\tpress enter to comfirm\n\tpress w to move upward and s for downward\n");
+	printf("\t\tregister\n");
+	printf("\t\tlogin\n");
 	do{
-		printf("\tpress enter to comfirm\n\tpress w to move upward and s for downward\n");
+		
 		if(selector == 1){
-			printf("\t\tregister<\n");
-			printf("\t\tlogin\n");
+			gotoxy(25 , 3);
+			putchar(' ');
+			gotoxy(25 , 2);
+			putchar('<');
 		}
 		else{
-			printf("\t\tregister\n");
-			printf("\t\tlogin<\n");
+			gotoxy(25 , 2);
+			putchar(' ');
+			gotoxy(25 , 3);
+			putchar('<');
 		}
 		cmd = getch();
-		cls;
 		if(cmd == 'w' || cmd == 'W'){
 			if(selector == 2){
 				Beep(500 , 100);
@@ -460,7 +585,7 @@ int choose_area(){
 void command_promte(PLAYER *player){
 	char cmd[1000] , input;
 	int quantity , i;
-	printf("Command Promot:\n");
+	printf("Command Prompt:\n");
 	do{
 		scanf("%s" , cmd);
 		if(strcmp(cmd , "inventory") == 0){
@@ -480,8 +605,20 @@ void command_promte(PLAYER *player){
 				printf("No such class\n");
 			}
 		}
+		else if(strcmp(cmd , "color") == 0){
+			int k;
+			scanf("%d" , &k);
+			if(1 <= k && k <= 255){
+				color(k);
+				printf("Done\n");
+			}
+			else{
+				printf("out of bound\n");
+			}
+		}
 		else if(strcmp(cmd , "admin_page") == 0){
-			printf("Developing\n");
+			admin_page();
+			printf("Command Prompt:\n");
 		}
 		else if(strcmp(cmd , "update") == 0){
 			updater(*player);
@@ -568,7 +705,7 @@ void command_promte(PLAYER *player){
 bool getinto_event(PLAYER player){
 	srand(time(NULL));
 	
-	if(mode == 2){
+	if(mode == 2){  //mining
 		int i , j;
 		char tap;
 		int rate = 0;
@@ -603,7 +740,7 @@ bool getinto_event(PLAYER player){
 			}
 			else if(tap == ESC){
 				cls;
-				printf("The ore will still be destory...\n");
+				printf("The ore will still be destoryed...\n");
 				pause;
 				return;
 			}
@@ -625,7 +762,7 @@ bool getinto_event(PLAYER player){
 	}
 	
 	
-	else if(mode == 3){
+	else if(mode == 3){  //huntung monster
 		printf("\t\tpress Y to ready..");
 		char cmd;
 		do{
@@ -685,6 +822,16 @@ bool getinto_event(PLAYER player){
 			double damage = ((double)player.weapon_val)/(time_taken * 10 + miss);
 			monster_health -= (int)fabs(floor(damage));
 			health -= d*miss;
+			if(d*miss){
+				gotoxy(15 , 5);
+				color(100);
+				printf("hurt");
+				color(255);
+				//pause;
+				Sleep(100);
+				gotoxy(15 , 5);
+				for(int k=0;k<4;k++) putchar(' ');
+			}
 		}
 		cls;
 		bool re = false;
@@ -755,15 +902,15 @@ void trading(){
 				char input;
 				printf("Please typing what alphabet you want to trade:");
 				scanf("%c" , &input);
-				if(('a' <= input && input < 'z') || ('A' <= input && input < 'Z')){
+				input = tolower(input);
+				if('a' <= input && input < 'z'){
 					cls;
 					int in;
-					input = tolower(input);
 					printf("How many you want to trade:");
 					scanf("%d" , &in);
-					if(alp[input - 'a'] >= 10000 * in){
-						alp[input - 'a'] -= 10000 * in;
-						alp[input - 'a' + 1]+=in;
+					if(alp[input - 'a' - 1] >= 10000 * in){
+						alp[input - 'a' - 1] -= 10000 * in;
+						alp[input - 'a' ]+=in;
 					}
 					else{
 						printf("You don't have enough alphabet..");
@@ -827,6 +974,9 @@ int main(){
 			first_into_map = false;
 		}
 		
+		/*if(move_cmd == 'm'){
+			admin_page();
+		}*/
 		
 		if(move_cmd == 'w' || move_cmd == 'W'){
 			if(play_map[player.y - 1][player.x] == ' '){
