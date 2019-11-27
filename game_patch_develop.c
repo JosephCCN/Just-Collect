@@ -11,7 +11,7 @@
 #define admin_user 3
 #define random_code 100
 #define random_chance 95
-#define max_stuff_val 100;
+#define max_stuff_val 100
 #define frequency 600
 #define duration 30
 #define max_level 3 //remember to change if a new level of ore is added
@@ -199,7 +199,46 @@ void admin_page(){
 			cls;
 		} 
 		else if(choose == 4){
-			printf("I am so lazy, therefore I will make it later\n");
+			char name[10005];
+			printf("Please input a player username:");
+			scanf("%s" , name);
+			char s1[10005] , s[10005];
+			strcpy(s, name);
+			strcpy(s1 , name);
+			strcat(s1 , "_2.txt");
+			strcat(s , ".txt");
+			FILE *file;
+			file = fopen(s , "r");
+			if(!file){
+				printf("No such player\n");
+				pause;
+				cls;
+				continue;
+			}
+			fclose(file);
+			int k = remove(s);
+			int p = remove(s1);
+			if(k == 0 && p == 0){
+				FILE *fp;
+				fp = fopen("player_list.txt" , "r");
+				char lt[10000][105];
+				int i = 0;
+				while(fscanf(fp , "%s\n" , lt[i]) != EOF){
+					if(strcmp(lt[i] , name) != 0){
+						i++;
+					}
+				}
+				fclose(fp);
+				fp = fopen("player_list.txt" , "w");
+				while(i--){
+					fprintf(fp , "%s\n" , lt[i]);
+				}
+				fclose(fp);
+				printf("Delete Success\n");
+			}
+			else{
+				printf("Error\n");
+			}
 			pause;
 			cls;
 		}
@@ -298,6 +337,10 @@ void register_f(){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
 	fclose(file);
+	FILE *fp;
+	fp = fopen("player_list.txt" , "a");
+	fprintf(fp , "%s\n" , user_name);
+	fclose(fp);
 	return ;
 }
 
@@ -819,7 +862,7 @@ bool getinto_event(PLAYER player){
 			}
 			clock_t end = clock() - start;
 			double time_taken = ((double)end)/CLOCKS_PER_SEC;
-			double damage = ((double)player.weapon_val)/(time_taken * 10 + miss);
+			double damage = ((double)player.weapon_val)/(time_taken /* 10*/ + miss);
 			monster_health -= (int)fabs(floor(damage));
 			health -= d*miss;
 			if(d*miss){
@@ -1312,7 +1355,7 @@ int main(){
 					player = exp_up(player , 50);
 				}
 				map_runner(map_information , player);
-			} 
+			}
 		}
 	}
 }
