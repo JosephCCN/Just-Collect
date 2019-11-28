@@ -410,8 +410,8 @@ bool login_class(){
 	int selector = 1;
 	int i;
 	printf("\tpress enter to comfirm\n\tpress w to move upward and s for downward\n");
-	printf("\t\tregister\n");
 	printf("\t\tlogin\n");
+	printf("\t\tregister\n");
 	do{
 		
 		if(selector == 1){
@@ -454,10 +454,10 @@ bool login_class(){
 	bool pass = false;
 	
 	switch(selector){
-		case 2:
+		case 1:
 			pass = login();
 			break;
-		case 1:
+		case 2:
 			register_f();
 			break;
 	}
@@ -584,10 +584,19 @@ void updater(PLAYER player){
 	fclose(file);
 	char filename2[1000];
 	sprintf(filename2 , "%s_2.txt" , player_ac);
+	file = fopen(filename2 , "r");
+	for(int i=0;i<type_of_core;i++){
+		int a;
+		fscanf(file , "%d" , &a);
+	}
+	int a , b;
+	fscanf(file , "%d %d" , &a , &b);
+	fclose(file);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
+	fprintf(file , "\n%d %d" , a , b);
 	fclose(file);
 	return ;
 }
@@ -642,6 +651,25 @@ void command_promte(PLAYER *player){
 				}
 				else{
 					printf("out of bound\n");
+				}
+			}
+			else if(strcmp(cmd , "ore")== 0){
+				char k[1005];
+				int i;
+				scanf("%s %d" , k , &quantity);
+				strcat(k , " Ore");
+				for(i=1;i<=type_of_core;i++){
+					if(strcmp(k , ore_code[i]) == 0){
+						break;
+					}
+				}
+				if(i > type_of_core){
+					printf("No such ore\n");
+				}
+				else{
+					ore_inventory[i]+=quantity;
+					puts("Done");
+					
 				}
 			}
 			else{
@@ -735,7 +763,7 @@ void command_promte(PLAYER *player){
 				printf("Out of bound...\n");
 			}
 		}
-		else if(strcmp(cmd , "inventory") == 0){
+		else if(strcmp(cmd , "open_inventory") == 0){
 			open_inventory();
 			printf("Done\n");
 		}
@@ -951,8 +979,8 @@ void trading(){
 					int in;
 					printf("How many you want to trade:");
 					scanf("%d" , &in);
-					if(alp[input - 'a' - 1] >= 10000 * in){
-						alp[input - 'a' - 1] -= 10000 * in;
+					if(alp[input - 'a' - 1] >= 100 * in){
+						alp[input - 'a' - 1] -= 100 * in;
 						alp[input - 'a' ]+=in;
 					}
 					else{
@@ -976,6 +1004,71 @@ void trading(){
 	printf("Bye..");
 	Sleep(500);
 	return;
+}
+
+void mission(){
+	FILE *fp;
+	char filename[1005];
+	strcpy(filename , player_ac);
+	strcat(filename , "_2.txt");
+	fp = fopen(filename , "r");
+	for(int i=0;i<type_of_core;i++){
+		int a;
+		fscanf(fp , "%d" , &a);
+	}
+	int quantity , input_ore_code;
+	char cmd;
+	fscanf(fp , "%d %d" , &quantity , &input_ore_code);
+	fclose(fp);
+	printf("You are required to submit %d %s\n" , quantity , ore_code[input_ore_code]);
+	printf("Yes<  No");
+	int line = 1;
+	do{
+		cmd = getch();
+		cmd = tolower(cmd);
+		if(cmd == 'a' && line == 2){
+			gotoxy(3 , 1);
+			putchar('<');
+			gotoxy(8 , 1);
+			putchar(' ');
+			line = 1;
+		}
+		else if(cmd == 'd' && line == 1){
+			gotoxy(3 , 1);
+			putchar(' ');
+			gotoxy(8 , 1);
+			putchar('<');
+			line = 2;
+		}
+	}while(cmd!='\r');
+	if(line == 1){
+		if(ore_inventory[input_ore_code] >= quantity){
+			ore_inventory[input_ore_code] -= quantity;
+		}	
+		else{
+			cls;
+			printf("You don't have enough ore...");
+			Sleep(1000);
+			return ;
+		}
+		int new_quty = rand()%10 + 1;
+		int new_code = rand()%type_of_core + 1;
+		fp = fopen(filename , "w");
+		for(int i=1;i<=type_of_core;i++){
+			fprintf(fp , "%d " , ore_inventory[i]);
+		}
+		fprintf(fp , "\n%d %d" , new_quty , new_code);
+		pause;
+		fclose(fp);
+		cls;
+		puts("Submitted");
+		pause;
+	}
+	else{
+		cls;
+		puts("Bye..");
+		Sleep(1000);
+	}
 }
 
 int main(){
@@ -1338,6 +1431,12 @@ int main(){
 		else if(move_cmd == 'I' || move_cmd == 'i'){
 			cls;
 			open_information(player);
+			cls;
+			map_runner(map_information , player);
+		}
+		else if(move_cmd == 'M' || move_cmd == 'm'){
+			cls;
+			mission();
 			cls;
 			map_runner(map_information , player);
 		}
