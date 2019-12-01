@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdbool.h>
 #include<stdlib.h>
+#include<string.h>
 #include<math.h>
 #include<conio.h>
 #include<windows.h>
@@ -54,6 +55,7 @@ typedef struct {
 typedef struct {
 	int x , y;
 	int weapon_val;
+	int defence;
 	int health;
 	int lv;
 } PLAYER;
@@ -75,6 +77,8 @@ char ore_code[100][100] = {"You fina an Easter Egg" , "Blue Ore" , "Red Ore" , "
 int ore_inventory[100];
 
 PLAYER coop;
+int total_monster_kill;
+int monster_counting;
 
 /*******struct part end***************/
 
@@ -89,6 +93,7 @@ int find_lv(int v){
 	int re = a;
 	return re;
 }
+
 
 int admin_page_class(int line){
 	printf("Please select:\n");
@@ -254,6 +259,7 @@ PLAYER exp_up(PLAYER player , int v){
 	int a = find_lv(player.lv);
 	player.lv += v;
 	int b = find_lv(player.lv);
+	player.defence += max(b - a , 0)*10;
 	player.health += max(b - a , 0) * 30;
 	player.weapon_val += max(b - a , 0) * 20;
 	return player;
@@ -326,7 +332,7 @@ void register_f(){
 	for(i=0;i<26;i++){
 		fprintf(file,"0\n");
 	}
-	fprintf(file , "10\n100");
+	fprintf(file , "10\n10\n100\n0\n0"); //AD defence health total_monster_kill monster_counting
 	fclose(file);
 	printf("Done\n");
 	Sleep(500);
@@ -336,6 +342,7 @@ void register_f(){
 	for(int i=0;i<type_of_core;i++){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
+	fprintf(file , "\n1 1\n10");
 	fclose(file);
 	FILE *fp;
 	fp = fopen("player_list.txt" , "a");
@@ -392,7 +399,7 @@ bool login(){
 	for(i=0;i<26;i++){
 		fscanf(file , "%d" , &alp[i]);
 	}
-	fscanf(file , "\n%d\n%d" , &coop.weapon_val , &coop.health);
+	fscanf(file , "\n%d\n%d\n%d\n%d\n%d" , &coop.weapon_val , &coop.defence , &coop.health , &total_monster_kill , &monster_counting);
 	fclose(file);
 	char filename2[1000];
 	sprintf(filename2 , "%s_2.txt" , user_name);
@@ -528,6 +535,11 @@ MAP map_driver(int code , PLAYER player){
 			//cls;
 			break;
 	}
+	strcpy(play_map[lim_i+1] , "T: Command Prompt");
+	strcpy(play_map[lim_i+2] , "P: Save the game");
+	strcpy(play_map[lim_i+3] , "I: Open player information");
+	strcpy(play_map[lim_i+4] , "M: Mission System");
+	re.x+=5;
 	return re;
 }
 
@@ -580,7 +592,7 @@ void updater(PLAYER player){
 	for(i=0;i<26;i++){
 		fprintf(file , "%d\n" , alp[i]);
 	}
-	fprintf(file , "%d\n%d" , player.weapon_val , player.health);
+	fprintf(file , "%d\n%d\n%d\n%d\n%d" , player.weapon_val , player.defence , player.health , total_monster_kill , monster_counting);
 	fclose(file);
 	char filename2[1000];
 	sprintf(filename2 , "%s_2.txt" , player_ac);
@@ -589,14 +601,14 @@ void updater(PLAYER player){
 		int a;
 		fscanf(file , "%d" , &a);
 	}
-	int a , b;
-	fscanf(file , "%d %d" , &a , &b);
+	int a , b , c;
+	fscanf(file , "%d %d\n%d" , &a , &b , &c);
 	fclose(file);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
-	fprintf(file , "\n%d %d" , a , b);
+	fprintf(file , "\n%d %d\n%d" , a , b , c);
 	fclose(file);
 	return ;
 }
@@ -892,7 +904,7 @@ bool getinto_event(PLAYER player){
 			double time_taken = ((double)end)/CLOCKS_PER_SEC;
 			double damage = ((double)player.weapon_val)/(time_taken /* 10*/ + miss);
 			monster_health -= (int)fabs(floor(damage));
-			health -= d*miss;
+			health -= max(d*miss - player.defence , 0);
 			if(d*miss){
 				gotoxy(15 , 5);
 				color(100);
@@ -908,6 +920,8 @@ bool getinto_event(PLAYER player){
 		bool re = false;
 		if(monster_health < 0){
 			printf("The monster is defeated.....\n");
+			total_monster_kill++;
+			monster_counting++;
 			if(full_combo){
 				printf("You Full Combo this time!!");
 			}
@@ -926,9 +940,12 @@ void open_information(PLAYER player){
 	printf("\t\t Your information:\n");
 	printf("\t\tHealth:%d\n" , player.health);
 	printf("\t\tStrength:%d\n" , player.weapon_val);
+	printf("\t\tArmor:%d\n" , player.defence);
 	printf("\t\tLevel:%d\n" , find_lv(player.lv));
 	printf("\t\tEXP:%d\n" , player.lv);
-	pause;
+	printf("\t\tTotal monster you have killed:%d\n" , total_monster_kill);
+	puts("Your inventory:");
+	open_inventory();
 	return ;
 }
 
@@ -1006,7 +1023,7 @@ void trading(){
 	return;
 }
 
-void mission(){
+void mission(PLAYER player){
 	FILE *fp;
 	char filename[1005];
 	strcpy(filename , player_ac);
@@ -1017,31 +1034,83 @@ void mission(){
 		fscanf(fp , "%d" , &a);
 	}
 	int quantity , input_ore_code;
+	int has_kill , need_to_kill;
 	char cmd;
-	fscanf(fp , "%d %d" , &quantity , &input_ore_code);
+	fscanf(fp , "%d %d\n" , &quantity , &input_ore_code);
+	fscanf(fp , "%d" , &need_to_kill);
 	fclose(fp);
-	printf("You are required to submit %d %s\n" , quantity , ore_code[input_ore_code]);
+	printf("Press ESC to exit mission system , Use A or D to select Yes or No , Press W and S to choose misssion , Press enter to comfirm selection\n");
+	printf("You are required to submit %d %s , Process:%d/%d\n" , quantity , ore_code[input_ore_code] , ore_inventory[input_ore_code] , quantity);
 	printf("Yes<  No");
+	printf("\nYou are required to kill %d monsters , Process:%d/%d\n" , need_to_kill , monster_counting , need_to_kill);
+	printf("Yes   No");
 	int line = 1;
+	int choice = 1;
+	int pre_choice = 1;
+	int pre_line = 1;
 	do{
 		cmd = getch();
 		cmd = tolower(cmd);
-		if(cmd == 'a' && line == 2){
-			gotoxy(3 , 1);
-			putchar('<');
-			gotoxy(8 , 1);
-			putchar(' ');
-			line = 1;
+		pre_choice = choice;
+		pre_line = line;
+		if(cmd == 'a'){
+			
+			choice = 1;
 		}
-		else if(cmd == 'd' && line == 1){
-			gotoxy(3 , 1);
-			putchar(' ');
-			gotoxy(8 , 1);
-			putchar('<');
+		else if(cmd == 'd'){
+			choice = 2;
+		}
+		else if(cmd == 's'){
 			line = 2;
 		}
+		else if(cmd == 'w'){
+			line = 1;
+		} 
+		else if(cmd == ESC){
+			return;
+		}
+		if(pre_choice == 1){
+			if(pre_line == 1){
+				gotoxy(3 , 2);
+			}
+			else{
+				gotoxy(3 , 4);
+			}
+		}
+		else{
+			if(pre_line == 1){
+				gotoxy(8 , 2);
+			}
+			else{
+				gotoxy(8 , 4);
+			}
+		}
+		putchar(' ');
+		if(choice == 1){
+			if(line == 1){
+				gotoxy(3 , 2);
+			}
+			else{
+				gotoxy(3 , 4);
+			}
+		}
+		else{
+			if(line == 1){
+				gotoxy(8 , 2);
+			}
+			else{
+				gotoxy(8 , 4);
+			}
+		}
+		putchar('<');
 	}while(cmd!='\r');
-	if(line == 1){
+	if(choice == 2){
+		cls;
+		puts("Bye...");
+		Sleep(1000);
+		return;
+	}
+	if(line == 1){  //mining ore
 		if(ore_inventory[input_ore_code] >= quantity){
 			ore_inventory[input_ore_code] -= quantity;
 		}	
@@ -1057,17 +1126,34 @@ void mission(){
 		for(int i=1;i<=type_of_core;i++){
 			fprintf(fp , "%d " , ore_inventory[i]);
 		}
-		fprintf(fp , "\n%d %d" , new_quty , new_code);
-		pause;
+		fprintf(fp , "\n%d %d\n%d" , new_quty , new_code , need_to_kill);
 		fclose(fp);
 		cls;
+		alp[0]+=10;
+		updater(player);
 		puts("Submitted");
 		pause;
 	}
-	else{
-		cls;
-		puts("Bye..");
-		Sleep(1000);
+	else{  // kill monster
+		if(monster_counting >= need_to_kill){
+			monster_counting -= need_to_kill;
+			FILE * fp;
+			fp = fopen(filename , "w");
+			for(int i=1;i<=type_of_core;i++){
+				fprintf(fp , "%d " , ore_inventory[i]);
+			}	
+			fprintf(fp , "\n%d %d\n%d" , quantity , input_ore_code , rand()%10 + 1);
+			fclose(fp);
+			alp[0]+=10;
+			updater(player);
+			puts("Submitted");
+			pause;
+		}
+		else{
+			cls;
+			puts("You havn't kill enough monster...");
+			pause;
+		}
 	}
 }
 
@@ -1126,7 +1212,7 @@ int main(){
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency , duration);
 			}
-			else if(play_map[player.y - 1][player.x] == 'M'){
+			else if(play_map[player.y - 1][player.x] == 'A'){
 				cls;
 				trading();
 				map_runner(map_information , player);
@@ -1193,7 +1279,7 @@ int main(){
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
 			}
-			else if(play_map[player.y + 1][player.x] == 'M'){
+			else if(play_map[player.y + 1][player.x] == 'A'){
 				cls;
 				trading();
 				map_runner(map_information , player);
@@ -1260,7 +1346,7 @@ int main(){
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
 			}
-			else if(play_map[player.y][player.x - 1] == 'M'){
+			else if(play_map[player.y][player.x - 1] == 'A'){
 				cls;
 				trading();
 				map_runner(map_information , player);
@@ -1329,7 +1415,7 @@ int main(){
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
 			}
-			else if(play_map[player.y][player.x + 1] == 'M'){
+			else if(play_map[player.y][player.x + 1] == 'A'){
 				cls;
 				trading();
 				map_runner(map_information , player);
@@ -1387,12 +1473,6 @@ int main(){
 				first_into_map = true;
 			}
 		}
-		else if(move_cmd == 'e' || move_cmd == 'E'){  //open inventory
-			cls;
-			open_inventory();
-			cls;
-			map_runner(map_information , player);
-		}
 		else if(move_cmd == ESC){  //exit
 			cls;
 			printf("Press Y to save the game and leave the game\n");
@@ -1428,7 +1508,7 @@ int main(){
 			cls;
 			map_runner(map_information , player);
 		}
-		else if(move_cmd == 'I' || move_cmd == 'i'){
+		else if(move_cmd == 'I' || move_cmd == 'i'){ //both information and inventory
 			cls;
 			open_information(player);
 			cls;
@@ -1436,7 +1516,7 @@ int main(){
 		}
 		else if(move_cmd == 'M' || move_cmd == 'm'){
 			cls;
-			mission();
+			mission(player);
 			cls;
 			map_runner(map_information , player);
 		}
