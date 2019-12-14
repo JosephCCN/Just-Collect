@@ -1,2 +1,4 @@
 # Just Collect
-A game make by C and can only run in windows
+Collect ore and kill monster
+Finish mission and gain letters
+Collect 100 'Z' to finish the game
