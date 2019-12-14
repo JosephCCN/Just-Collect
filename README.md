@@ -1,2 +1,2 @@
 # Just Collect
-A game make by C++ and only can run in windows
+A game make by C and can only run in windows
