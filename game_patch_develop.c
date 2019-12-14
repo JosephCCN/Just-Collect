@@ -62,7 +62,7 @@ typedef struct {
 
 char play_map[1000][1000];
 int core_lv_divide[1000][1000]; //only for map 2 i.e. mining area
-char admin_list[100][100] = {"test" , "joseph" , "Ian\n"};
+char admin_list[100][100] = {"test" , "joseph" , "Ian"};
 char ore_list[101][100][100] = {
 
 {},
@@ -79,6 +79,7 @@ int ore_inventory[100];
 PLAYER coop;
 int total_monster_kill;
 int monster_counting;
+int skillpoint[5];
 
 /*******struct part end***************/
 
@@ -181,10 +182,10 @@ void admin_page(){
 				fscanf(fp , "%d\n" , &num);
 				printf("%c...%d\n" , 'A' + i,num);
 			}
-			int a , b;
+			int a , b , c , d  ,e;
 			puts("Hunting part:");
-			fscanf(fp , "%d\n%d\n" , &a , &b);
-			printf("Attack Power:%d Health:%d\n" , a , b);
+			fscanf(fp , "%d\n%d\n%d\n%d" , &a , &b , &c , &d);
+			printf("Attack Power:%d Armor:%d Health:%d\nTotal Monster killed:%d\n" , a , b , c , d);
 			fclose(fp);
 			puts("Mining Part:");
 			strcat(tmp , "_2.txt");
@@ -321,6 +322,7 @@ void register_f(){
 	
 	if(fopen(file_name , "r")){
 		printf("user already registered!!\n");
+		pause;
 		return ;
 	}
 	
@@ -342,11 +344,11 @@ void register_f(){
 	for(int i=0;i<type_of_core;i++){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
-	fprintf(file , "\n1 1\n10");
+	fprintf(file , "\n1 1\n10\n0 0 0 0"); //the first 3 numbers are for mission sys , the next 4 is for skill point
 	fclose(file);
 	FILE *fp;
 	fp = fopen("player_list.txt" , "a");
-	fprintf(fp , "%s\n" , user_name);
+	fprintf(fp , "\n%s" , user_name);
 	fclose(fp);
 	return ;
 }
@@ -407,6 +409,9 @@ bool login(){
 	for(int i=0;i<type_of_core;i++){
 		fscanf(file , "%d" , &ore_inventory[i + 1]);
 	}
+	int a;
+	for(int i=0;i<3;i++) fscanf(file , "%d" , &a);
+	fscanf(file , "%d %d %d %d" , &skillpoint[1] , &skillpoint[2] , &skillpoint[3] , &skillpoint[4]);
 	fclose(file);
 	Sleep(500);
 	return true;
@@ -416,33 +421,34 @@ bool login_class(){
 	char cmd;
 	int selector = 1;
 	int i;
+	printf("\t\tStone Studio\n");
 	printf("\tpress enter to comfirm\n\tpress w to move upward and s for downward\n");
 	printf("\t\tlogin\n");
 	printf("\t\tregister\n");
 	do{
 		
 		if(selector == 1){
-			gotoxy(25 , 3);
+			gotoxy(25 , 4);
 			putchar(' ');
-			gotoxy(25 , 2);
+			gotoxy(25 , 3);
 			putchar('<');
 		}
 		else{
-			gotoxy(25 , 2);
-			putchar(' ');
 			gotoxy(25 , 3);
+			putchar(' ');
+			gotoxy(25 , 4);
 			putchar('<');
 		}
 		cmd = getch();
 		if(cmd == 'w' || cmd == 'W'){
 			if(selector == 2){
-				Beep(500 , 100);
+				//Beep(500 , 100);
 				selector = 1;
 			}
 		}
 		else if(cmd == 's' || cmd == 'S'){
 			if(selector == 1){
-				Beep(500 , 100);
+				//Beep(500 , 100);
 				selector = 2;
 			}
 		}
@@ -539,7 +545,8 @@ MAP map_driver(int code , PLAYER player){
 	strcpy(play_map[lim_i+2] , "P: Save the game");
 	strcpy(play_map[lim_i+3] , "I: Open player information");
 	strcpy(play_map[lim_i+4] , "M: Mission System");
-	re.x+=5;
+	strcpy(play_map[lim_i+5] , "O: Skill Points");
+	re.x+=6;
 	return re;
 }
 
@@ -608,7 +615,8 @@ void updater(PLAYER player){
 	for(int i=0;i<type_of_core;i++){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
-	fprintf(file , "\n%d %d\n%d" , a , b , c);
+	fprintf(file , "\n%d %d\n%d\n" , a , b , c);
+	for(int i=1;i<=4;i++) fprintf(file , "%d " , &skillpoint[i]);
 	fclose(file);
 	return ;
 }
@@ -726,7 +734,8 @@ void command_promte(PLAYER *player){
 			int a = temp.health;
 			int b = temp.weapon_val;
 			int c = temp.lv;
-			printf("Health:%d Attack:%d EXP:%d Lv.%d\n" , a , b , c  ,find_lv(c));
+			int d = temp.defence;
+			printf("Health:%d Attack:%d Armor:%d\nEXP:%d Lv.%d\nTotal Monster Killed:%d" , a , b , d , c  ,find_lv(c) , total_monster_kill);
 		}
 		else if(strcmp(cmd , "re-gen") == 0){
 			int input;
@@ -855,9 +864,8 @@ bool getinto_event(PLAYER player){
 		printf("\t\tStart!!");
 		Sleep(100);
 		cls;
-		char words[4] = {'Q' , 'W' , 'E' , 'R'};
 		int max_str_length = 5;  //max generate string length
-		int max_damage = 30; //max damage monster can hit
+		int max_damage = player.health * 0.2; //max damage monster can hit
 		int i , j;
 		for(i=0;i<=10;i++){
 			gotoxy(10 , 10 + i);
@@ -872,8 +880,12 @@ bool getinto_event(PLAYER player){
 			printf("\n");
 		}
 		bool full_combo = true;
-		int monster_health = rand()%max_stuff_val + 1;
-		int health = player.health;
+		int monster_health = rand()%player.weapon_val * 3 + player.weapon_val * 2;
+		
+		player.weapon_val+=skillpoint[1]*2;
+		int health = player.health + skillpoint[2]*5;
+		player.defence += skillpoint[3]*2;
+		
 		while(monster_health > 0 && health > 0){
 			int d = rand()%max_damage + 1;
 			gotoxy(13 , 11);
@@ -886,16 +898,12 @@ bool getinto_event(PLAYER player){
 			clock_t start = clock();
 			int miss = 0;
 			for(i=0;i<random;i++){
-				char word = words[rand()%4];
+				char word = (rand()%26) + 'A';
 				gotoxy(22 , 14);
 				printf("%c" , word);
 				char cmd;
 				cmd = getch();
-				if(cmd == 'k'){
-					monster_health = -10;
-				}
 				if(cmd != tolower(word)){
-					
 					full_combo = false;
 					miss++;
 				}
@@ -906,19 +914,19 @@ bool getinto_event(PLAYER player){
 			monster_health -= (int)fabs(floor(damage));
 			health -= max(d*miss - player.defence , 0);
 			if(d*miss){
-				gotoxy(15 , 5);
+				gotoxy(15 , 7);
 				color(100);
 				printf("hurt");
 				color(255);
 				//pause;
-				Sleep(100);
-				gotoxy(15 , 5);
+				Sleep(200);
+				gotoxy(15 , 7);
 				for(int k=0;k<4;k++) putchar(' ');
 			}
 		}
 		cls;
 		bool re = false;
-		if(monster_health < 0){
+		if(monster_health <= 0){
 			printf("The monster is defeated.....\n");
 			total_monster_kill++;
 			monster_counting++;
@@ -989,7 +997,7 @@ void trading(){
 				cls;
 				char input;
 				printf("Please typing what alphabet you want to trade:");
-				scanf("%c" , &input);
+				scanf(" %c" , &input);
 				input = tolower(input);
 				if('a' <= input && input < 'z'){
 					cls;
@@ -1157,6 +1165,163 @@ void mission(PLAYER player){
 	}
 }
 
+
+
+void skill_point(PLAYER player){
+	int lv = find_lv(player.lv);
+	printf("Skill point remain:\t%d\n" , lv - skillpoint[1] - skillpoint[2] - skillpoint[3] - skillpoint[4]);
+	printf("Attack:\t%d\n" , skillpoint[1]);
+	printf("Health:\t%d\n" , skillpoint[2]);
+	printf("Armor:\t%d\n" , skillpoint[3]);
+	printf("Reward:\t%d\n" , skillpoint[4]);
+	printf("Leave");
+	gotoxy(20 , 1);
+	putchar('<');
+	int line = 1;
+	while(1){
+		char cmd;
+		cmd = getch();
+		cmd = tolower(cmd);
+		if(cmd == 's' && line < 5){
+			gotoxy(20, line);
+			putchar(' ');
+			line++;
+			gotoxy(20, line);
+			putchar('<');
+		}
+		else if(cmd == 'w' && line > 1){
+			gotoxy(20, line);
+			putchar(' ');
+			line--;
+			gotoxy(20, line);
+			putchar('<');
+		}
+		else if(cmd == 'a'){
+			skillpoint[line] = max(skillpoint[line] - 1 , 0);
+			gotoxy(8 , line);
+			for(int i=0;i<20;i++) putchar(' ');
+			gotoxy(8 , line);
+			printf("%d" , skillpoint[line]);
+			gotoxy(20 , line);
+			putchar('<');
+		}
+		else if(cmd == 'd'){
+			skillpoint[line]++;
+			if(skillpoint[1] + skillpoint[2] + skillpoint[3] + skillpoint[4] > lv){
+				skillpoint[line]--;
+			}
+			gotoxy(8 , line);
+			for(int i=0;i<20;i++) putchar(' ');
+			gotoxy(8 , line);
+			printf("%d" , skillpoint[line]);
+			gotoxy(20 , line);
+			putchar('<');
+		}
+		else if(cmd == '\r' && line == 5){
+			cls;
+			printf("Bye...");
+			Sleep(1000);
+			break;
+		}
+	}
+}
+
+void new_combat(){
+	int i , j;
+	for(i=0;i<=15;i++){
+		gotoxy(10 , 10 + i);
+		for(j=0;j<=30;j++){
+			if(i == 0 || i == 15 || j == 0 || j == 30){
+				printf("#");
+			}
+			else{
+				printf(" ");
+			}
+		}
+		printf("\n");
+	}
+	
+	int randnum = rand()%10 + 3;
+	int escap_map[100][100] = {0,};
+	
+	for(int i=0;i<randnum;i++){
+		int x = rand()%9 + 1;
+		int y = rand()%28 + 1;
+		escap_map[x][y] = 1;
+		if(x != 1){
+			escap_map[x - 1][y] = 1;
+		}
+		else{
+			escap_map[x][y - 1] = 1;
+		}
+	}
+	
+	for(i=1;i<10;i++){
+		gotoxy(11 , 11 + i);
+		for(int j=1;j<30;j++){
+			if(escap_map[i][j]){
+				putchar(' ');
+			}
+			else{
+				putchar('*');
+			}
+		}
+	}
+	Sleep(1000);
+	for(i=1;i<10;i++){
+		gotoxy(11 , 11 + i);
+		for(int j=1;j<30;j++){
+			putchar(' ');
+		}
+	}
+	int x = rand()%28 + 1 , y = rand()%8 + 1;
+	x+=11;
+	y+=11;
+	gotoxy(x , y);
+	putchar('@');
+	
+	clock_t start = clock();
+	do{
+		char cmd;
+		cmd = getch();
+		cmd = tolower(cmd);
+		if(cmd == 'w' && y > 12){
+			gotoxy(x , y);
+			putchar(' ');
+			y--;
+			gotoxy(x , y);
+			putchar('@');
+		}
+		else if(cmd == 'a' && x > 11){
+			gotoxy(x , y);
+			putchar(' ');
+			x--;
+			gotoxy(x , y);
+			putchar('@');
+		}
+		else if(cmd == 's' && y < 20){
+			gotoxy(x , y);
+			putchar(' ');
+			y++;
+			gotoxy(x , y);
+			putchar('@');
+		}
+		else if(cmd == 'd' && x < 39){
+			gotoxy(x , y);
+			putchar(' ');
+			x++;
+			gotoxy(x , y);
+			putchar('@');
+		}
+	}while((clock() - start)/CLOCKS_PER_SEC <= 2); 
+	cls;
+	//printf("%d %d %d" , x , y , escap_map[x][y]);
+	if(escap_map[x][y] == 0){
+		printf("Hurt!!!!");
+	}
+	Sleep(1000);
+}
+
 int main(){
 	
 	//initiallize
@@ -1168,6 +1333,11 @@ int main(){
 	SetConsoleScreenBufferSize(buff,sizeOfBuff);
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,15,10 ,1250,600 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
+	
+	if(fopen("cheatison.txt" , "r")){
+		new_combat();
+		return 0;
+	}
 	
 	while(!login_class()){
 		cls;
@@ -1520,6 +1690,12 @@ int main(){
 			cls;
 			map_runner(map_information , player);
 		}
+		else if(move_cmd == 'O' || move_cmd == 'o'){
+			cls;
+			skill_point(player);
+			cls;
+			map_runner(map_information , player);
+		}
 		if(move_cmd == 's' || move_cmd == 'S' || move_cmd == 'W' || move_cmd == 'w' || move_cmd == 'A' || move_cmd == 'a' || move_cmd == 'd' || move_cmd == 'D'){
 			if(random >= random_chance && mode == 3 && !first_into_map){
 				cls;
@@ -1531,7 +1707,7 @@ int main(){
 				bool re = getinto_event(player);
 				cls;
 				if(re){
-					player = exp_up(player , 50);
+					player = exp_up(player , 50 + skillpoint[4] * 5);
 				}
 				map_runner(map_information , player);
 			}
