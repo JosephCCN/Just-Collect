@@ -195,6 +195,15 @@ void admin_page(){
 				fscanf(fp , "%d\n" , &k);
 				printf("%s\t%d\n" , ore_code[i+1] , k);
 			}
+			fscanf(fp , "%d %d\n%d" , &a , &b , &c);
+			fscanf(fp , "%d" , &k);
+			printf("Attack: %d\n" , k);
+			fscanf(fp , "%d" , &k);
+			printf("Health: %d\n" , k);
+			fscanf(fp , "%d" , &k);
+			printf("Armor: %d\n" , k);
+			fscanf(fp , "%d" , &k);
+			printf("Quantity: %d\n" , k);
 			fclose(fp);
 			pause;
 			cls;
@@ -616,7 +625,7 @@ void updater(PLAYER player){
 		fprintf(file , "%d " , ore_inventory[i + 1]);
 	}
 	fprintf(file , "\n%d %d\n%d\n" , a , b , c);
-	for(int i=1;i<=4;i++) fprintf(file , "%d " , &skillpoint[i]);
+	for(int i=1;i<=4;i++) fprintf(file , "%d " , skillpoint[i]);
 	fclose(file);
 	return ;
 }
@@ -1202,6 +1211,10 @@ void skill_point(PLAYER player){
 			for(int i=0;i<20;i++) putchar(' ');
 			gotoxy(8 , line);
 			printf("%d" , skillpoint[line]);
+			gotoxy(24 , 0);
+			for(int i=0;i<20;i++) putchar(' ');
+			gotoxy(24 , 0);
+			printf("%d" , lv - skillpoint[1] - skillpoint[2] - skillpoint[3] - skillpoint[4]);
 			gotoxy(20 , line);
 			putchar('<');
 		}
@@ -1214,6 +1227,10 @@ void skill_point(PLAYER player){
 			for(int i=0;i<20;i++) putchar(' ');
 			gotoxy(8 , line);
 			printf("%d" , skillpoint[line]);
+			gotoxy(24 , 0);
+			for(int i=0;i<20;i++) putchar(' ');
+			gotoxy(24 , 0);
+			printf("%d" , lv - skillpoint[1] - skillpoint[2] - skillpoint[3] - skillpoint[4]);
 			gotoxy(20 , line);
 			putchar('<');
 		}
