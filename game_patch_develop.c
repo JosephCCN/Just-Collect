@@ -69,7 +69,7 @@ typedef struct{
 
 char play_map[1000][1000];
 int core_lv_divide[1000][1000]; //only for map 2 i.e. mining area
-char admin_list[100][100] = {"test" , "joseph" , "Ian"};
+char admin_list[100][100] = {"test" , "joseph" , "ian"};
 char ore_list[101][100][100] = {
 
 {},
