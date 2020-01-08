@@ -18,7 +18,7 @@
 #define frequency 600
 #define duration 30
 #define max_level 3 //remember to change if a new level of ore is added
-#define type_of_core 5 //remember to change if a new core is added
+#define type_of_core 4 //remember to change if a new core is added
 
 /**
 list of command code:
@@ -73,14 +73,14 @@ char admin_list[100][100] = {"test" , "joseph" , "Ian"};
 char ore_list[101][100][100] = {
 
 {},
-{"Blue Ore" , "Red Ore" , "Christmas Stone"},  //lv.1
+{"Blue Ore" , "Red Ore"},  //lv.1
 {"IDK Ore"},   //lv.2
 {"il7 Ore"},   //lv.3
 
 }; //lv , string array
 
-int ore_in_each_lv[100] = {0 , 3 , 1 , 1}; //remember to change if a new core is added
-char ore_code[100][100] = {"Christmas Stone" , "Blue Ore" , "Red Ore" , "IDK Ore" , "il7 Ore"};
+int ore_in_each_lv[100] = {0 , 2 , 1 , 1}; //remember to change if a new core is added
+char ore_code[100][100] = {"You find a Easter EGG" , "Blue Ore" , "Red Ore" , "IDK Ore" , "il7 Ore"};
 int ore_inventory[100];
 
 PLAYER coop;
