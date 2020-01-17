@@ -87,6 +87,11 @@ PLAYER coop;
 int total_monster_kill;
 int monster_counting;
 int skillpoint[5];
+char main_character;
+char boundary_skin;
+int text_color;
+char narrow;
+char up , down , left , right;
 
 /*******struct part end***************/
 
@@ -390,7 +395,12 @@ void register_f(){
 	fp = fopen("player_list.txt" , "a");
 	fprintf(fp , "\n%s" , user_name);
 	fclose(fp);
-	return ;
+	
+	char setting[1005];
+	sprintf(setting , "setting_%s.txt" , user_name);
+	fp = fopen(setting , "w");
+	fprintf(fp , "main_character_skin=@\nboundary_skin=#\ntext_color=255\nUp=w\nDown=s\nLeft=a\nRight=d\n");
+	fclose(fp);
 }
 
 bool login(){
@@ -454,6 +464,18 @@ bool login(){
 	fscanf(file , "%d %d %d %d" , &skillpoint[1] , &skillpoint[2] , &skillpoint[3] , &skillpoint[4]);
 	fclose(file);
 	Sleep(500);
+	
+	char setting[2005];
+	sprintf(setting , "setting_%s.txt" , user_name);
+	file = fopen(setting , "r");
+	fscanf(file , "main_character_skin=%c\n" , &main_character);
+	fscanf(file , "boundary_skin=%c\n" , &boundary_skin);
+	fscanf(file , "text_color=%d\n" , &text_color);
+	fscanf(file , "Up=%c\n" , &up);
+	fscanf(file , "Down=%c\n" , &down);
+	fscanf(file , "Left=%c\n" , &left);
+	fscanf(file , "Right=%c\n" , &right);
+	fclose(file);
 	return true;
 }
 
@@ -554,6 +576,9 @@ MAP map_driver(int code , PLAYER player){
 			else{
 				core_lv_divide[i][j] = 0;
 			}
+			if(play_map[i][j] == '#'){
+				play_map[i][j] = boundary_skin;
+			}
 		}
 		fscanf(file , "\n");
 	}
@@ -596,7 +621,7 @@ void map_runner(MAP information , PLAYER player){
 	for(i = 0 ;i < information.x;i++){
 		for(j = 0 ; j < information.y;j++){
 			if(j == player.x && i == player.y){
-				printf("@");
+				putchar(main_character);
 			}
 			else{
 				printf("%c" , play_map[i][j]);
@@ -1038,7 +1063,7 @@ bool getinto_event(PLAYER player){
 			gotoxy(11 , 10);
 			printf("Health:%d" , player.health);
 			gotoxy(11 , 11);
-			printf("Monster Health:%d" , monster_health);
+			printf("Monster Health:%d" , max(monster_health , 0));
 			gotoxy(11 , 12);
 			if(k.hurt){
 				puts("You have taken damage!!");
@@ -1357,6 +1382,7 @@ void skill_point(PLAYER player){
 	}
 }
 
+
 int main(){
 	
 	//initiallize
@@ -1371,14 +1397,12 @@ int main(){
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
 	
-	if(fopen("cheatison.txt" , "r")){
-		new_combat();
-		return 0;
-	}
-	
 	while(!login_class()){
 		cls;
 	}
+	
+	color(text_color);
+	
 	/*********game start!!**********************/
 	int i , j;
 	int random;
@@ -1396,6 +1420,7 @@ int main(){
 		bool first_into_map = false;
 		
 		move_cmd = getch();
+		move_cmd = tolower(move_cmd);
 		
 		random = rand()%random_code + 1;
 		
@@ -1407,14 +1432,14 @@ int main(){
 			admin_page();
 		}*/
 		
-		if(move_cmd == 'w' || move_cmd == 'W'){
+		if(move_cmd == up){
 			if(play_map[player.y - 1][player.x] == ' '){
 				gotoxy(player.x , player.y);
 				//Sleep(1000);
 				printf(" ");
 				//Sleep(500);
 				gotoxy(player.x  , player.y - 1);
-				printf("@");
+				putchar(main_character);
 				player.y--;
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency , duration);
@@ -1476,12 +1501,12 @@ int main(){
 		}
 		
 		
-		else if(move_cmd == 's' || move_cmd == 'S'){
+		else if(move_cmd == down){
 			if(play_map[player.y + 1][player.x] == ' '){
 				gotoxy(player.x , player.y);
 				printf(" ");
 				gotoxy(player.x  , player.y + 1);
-				printf("@");
+				putchar(main_character);
 				player.y++;
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
@@ -1543,12 +1568,12 @@ int main(){
 		}
 		
 		
-		else if(move_cmd == 'a' || move_cmd == 'A'){
+		else if(move_cmd == left){
 			if(play_map[player.y][player.x - 1] == ' '){
 				gotoxy(player.x , player.y);
 				printf(" ");
 				gotoxy(player.x - 1, player.y);
-				printf("@");
+				putchar(main_character);
 				player.x--;
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
@@ -1612,12 +1637,12 @@ int main(){
 		}
 		
 		
-		else if(move_cmd == 'd' || move_cmd == 'D'){
+		else if(move_cmd == right){
 			if(play_map[player.y][player.x + 1] == ' '){
 				gotoxy(player.x , player.y);
 				printf(" ");
 				gotoxy(player.x + 1 , player.y);
-				printf("@");
+				putchar(main_character);
 				player.x++;
 				gotoxy(map_lower_x , map_lower_y);
 				Beep(frequency ,  duration);
