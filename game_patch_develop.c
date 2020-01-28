@@ -7,6 +7,8 @@
 #include<windows.h>
 #include<time.h>
 #include<wchar.h>
+#include <stdarg.h>
+#include<unistd.h>
 #include "Encryption.h"
 #define cls system("cls");
 #define pause system("pause");
@@ -88,10 +90,12 @@ int total_monster_kill;
 int monster_counting;
 int skillpoint[5];
 char main_character;
-char boundary_skin;
+char boundary_skin = '#';
 int text_color;
 char narrow;
 char up , down , left , right;
+bool admin_checked = false;
+bool string_cmp(char* , char* );
 
 /*******struct part end***************/
 
@@ -104,6 +108,10 @@ void string_input(char str[] , int max_len , bool hide){
 	int pt = 0;
 	while(1){
 		char ch = getch();
+		if(ch == ESC){
+			strcpy(str , "GoToHomePage_Code:100");
+			return;
+		}
 		ch = tolower(ch);
 		if((33 > ch || ch > 127) && ch != '\r' && ch != '\b') continue;
 		if(ch == '\r'){
@@ -179,6 +187,9 @@ void admin_page(){
 				fp = fopen(name , "r");
 				char password[10005];
 				fscanf(fp , "%s\n" , password);
+				if(string_cmp(password , "ADMIN")){
+					fscanf(fp , "%s\n" , password);
+				}
 				fclose(fp);
 				for(int i=0;i<30 - strlen(name) - strlen(password);i++){
 					putchar('.');
@@ -208,7 +219,16 @@ void admin_page(){
 			printf("Player %s:\n" , tmp);
 			char password[1005];
 			fscanf(fp , "%s\n" , password);
-			printf("Password: %s\n" , password);
+			if(string_cmp(password , "ADMIN")){
+				fscanf(fp , "%s\n" , password);
+				printf("Password: %s\n" , password);
+				puts("Account Identity: Admin");
+			}
+			else{
+				printf("Password: %s\n" , password);
+				puts("Account Identity: Player");
+			}
+			
 			int k;
 			fscanf(fp , "%d\n" , &k);
 			printf("Exp:%d   Lv.:%d\n" , k , find_lv(k));
@@ -241,6 +261,15 @@ void admin_page(){
 			fscanf(fp , "%d" , &k);
 			printf("Quantity: %d\n" , k);
 			fclose(fp);
+			
+			puts("Settings:");
+			char setting[1005];
+			sprintf(setting , "setting_%s.txt" , player_ac);
+			fp = fopen(setting , "r");
+			while(fscanf(fp , "%s" , input) != EOF){
+				printf("%s\n" , input);
+			}
+			fclose(fp);
 			pause;
 			cls;
 		}
@@ -258,15 +287,12 @@ void admin_page(){
 			strcpy(s1 , name);
 			strcat(s1 , "_2.txt");
 			strcat(s , ".txt");
-			FILE *file;
-			file = fopen(s , "r");
-			if(!file){
+			if(access(s , F_OK) == -1){
 				printf("No such player\n");
 				pause;
 				cls;
 				continue;
 			}
-			fclose(file);
 			int k = remove(s);
 			int p = remove(s1);
 			if(k == 0 && p == 0){
@@ -346,19 +372,14 @@ bool string_cmp(char s1[] , char s2[]){
 }
 
 bool check_admin(char s[]){
-	int i;
-	for(i=0;i<admin_user;i++){
-		if(string_cmp(admin_list[i] , s)){
-			return true;
-		}
-	}
-	return false;
+	return admin_checked;
 }
 
 void register_f(){
 	char user_name[100];
 	char password[100];
 	char file_name[105];
+	char password_sec[105];
 	int i;
 	
 	printf("please enter you user name(only record the first 100 characters):\n");
@@ -373,8 +394,7 @@ void register_f(){
 	
 	FILE * file = fopen(file_name , "w");
 	printf("please enter your password(only record the first 100 characters):\n");
-	string_input(password , 100 , true);
-	
+	string_input(password , 100 , false);
 	fprintf(file , "%s\n0\n" , password);
 	for(i=0;i<26;i++){
 		fprintf(file,"0\n");
@@ -432,9 +452,14 @@ bool login(){
 	char comfirm_password[105];
 	fgets(comfirm_password , 100 , file);
 	
+	if(string_cmp(comfirm_password , "ADMIN")){
+		fgets(comfirm_password , 100 , file);
+		admin_checked = true;
+	}
 	
 	
 	if(!string_cmp(password , comfirm_password)){
+		admin_checked = false;
 		printf("Wrong password!!\n");
 		Sleep(500);
 		return false;
@@ -658,8 +683,14 @@ void updater(PLAYER player){
 	FILE *file;
 	file = fopen(file_name , "r");
 	fgets(password , 100 , file);
+	if(admin_checked){
+		fgets(password , 100 , file);
+	}
 	fclose(file);
 	file = fopen(file_name , "w");
+	if(admin_checked){
+		fprintf(file , "ADMIN\n");
+	}
 	fprintf(file , "%s%d\n" , password , player.lv);
 	for(i=0;i<26;i++){
 		fprintf(file , "%d\n" , alp[i]);
@@ -1382,6 +1413,142 @@ void skill_point(PLAYER player){
 	}
 }
 
+int new_mining(){
+	
+	int height[1005] = {0,};
+	
+	int have[100][100] = {0,};
+	for(int i=0;i<=30;i++){
+		height[i] = rand()%10 + 5;
+	}
+	
+	for(int i=0;i<30;i++){
+		gotoxy(50 , 10 + i);
+		for(int j=0;j<=30;j++){
+			if(i == 0 || i == 29 || j == 0 || j == 30){
+				putchar(boundary_skin);
+			}
+			else if(30 - i <= height[j]){
+				putchar('*');
+				have[i][j] = 1;
+			}
+			else{
+				putchar(' ');
+			}
+		}
+		putchar('\n');
+	}
+	
+	int sum = 0;
+	int x = 65, y = 11;
+	for(int i=0;i<5;i++){
+		
+		long double dur = 1e-9;
+		clock_t start = clock();
+		gotoxy(x , y);
+		putchar('&');
+		while(height[x - 50] <= 40 - y){
+			if(kbhit()){
+				int prev = x;
+				char c = getch();
+				c = tolower(c);
+				if(c == 'a' && x > 51 && 40 - y > height[x - 51]){
+					x--;
+				}
+				else if(c == 'd' && x < 79 && 40 - y > height[x - 49]){
+					x++;
+				}
+				else if(c == 's'){
+					gotoxy(x , y);
+					putchar(' ');
+					y++;
+					gotoxy(x , y);
+					putchar('&'); 
+				}
+				if(prev != x){
+					gotoxy(prev , y);
+					putchar(' ');
+					if((clock() - start)/CLOCKS_PER_SEC >= dur){
+						start = clock();
+						y++;
+					}
+					gotoxy(x , y);
+					putchar('&'); 
+					
+				}
+			}
+			else if((clock() - start)/CLOCKS_PER_SEC >= dur){
+				gotoxy(x , y);
+				putchar(' ');
+				y++;
+				gotoxy(x , y);
+				putchar('&'); 
+				start = clock();
+			}
+		}
+		
+		gotoxy(x , y);
+		putchar(' ');
+		gotoxy(x - 1, y);
+		putchar(' ');
+		gotoxy(x + 1, y);
+		putchar(' ');
+		gotoxy(x - 1, y - 1);
+		putchar(' ');
+		gotoxy(x - 1, y + 1);
+		putchar(' ');
+		gotoxy(x + 1, y - 1);
+		putchar(' ');
+		gotoxy(x + 1, y + 1);
+		putchar(' ');
+		gotoxy(x , y + 1);
+		putchar(' ');
+		gotoxy(x , y - 1);
+		putchar(' ');
+		
+		y = y - 10;
+		x = x - 50;
+		if(have[y][x] == 1){
+			sum++;
+			have[y][x] = 0;
+		}	
+		if(have[y][x + 1]  == 1){
+			sum++;
+			have[y][x + 1]  = 0;
+		}
+		if(have[y][x - 1]  == 1){
+			sum++;
+			have[y][x - 1] = 0;
+		}
+		if(have[y - 1][x - 1] == 1){
+			sum++;
+			have[y - 1][x - 1] = 0;
+		}
+		if(have[y - 1][x + 1] == 1){
+			sum++;
+			have[y - 1][x + 1] = 0;
+		}
+		if(have[y + 1][x] == 1){
+			sum++;
+			have[y + 1][x] = 0;
+		}
+		if(have[y - 1][x] == 1){
+			sum++;
+			have[y - 1][x] = 0;
+		}
+		if(have[y + 1][x - 1] == 1){
+			sum++;
+			have[y + 1][x - 1] = 0;
+		}
+		if(have[y + 1][x + 1] == 1){
+			sum++;
+			have[y + 1][x + 1] = 0;
+		}
+		x += 50;
+		y += 10;
+	}
+	return sum;
+}
 
 int main(){
 	
@@ -1389,13 +1556,18 @@ int main(){
 	srand(time(NULL));
 	char consoletitle[200] = "Just Collect";
 	SetConsoleTitle((wchar_t*)consoletitle);
-	/*HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD sizeOfBuff;
 	sizeOfBuff.X=300;
 	sizeOfBuff.Y=300;
-	SetConsoleScreenBufferSize(buff,sizeOfBuff);*/
+	SetConsoleScreenBufferSize(buff,sizeOfBuff);
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
+	
+	if(fopen("cheatison.txt" , "r")){
+		new_mining();
+		return 0;
+	}
 	
 	while(!login_class()){
 		cls;
