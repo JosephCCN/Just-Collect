@@ -529,13 +529,11 @@ bool login_class(){
 		cmd = getch();
 		if(cmd == 'w' || cmd == 'W'){
 			if(selector == 2){
-				//Beep(500 , 100);
 				selector = 1;
 			}
 		}
 		else if(cmd == 's' || cmd == 'S'){
 			if(selector == 1){
-				//Beep(500 , 100);
 				selector = 2;
 			}
 		}
@@ -732,11 +730,9 @@ int choose_area(){
 		}
 		cmd = getch();
 		if(cmd == 'W' || cmd == 'w'){
-			Beep(400 , 10);
 			select = 1;
 		}
 		else if(cmd == 'S' || cmd == 's'){
-			Beep(400 , 10);
 			select = 2;
 		}
 	}while(cmd != '\r' && cmd != ESC);
@@ -745,7 +741,6 @@ int choose_area(){
 		//Sleep(500);
 		return -99999;
 	}
-	Beep(500 , 10);
 	return select;
 }
 
@@ -1001,67 +996,171 @@ CI new_combat(){
 	}
 }
 
+
+int new_mining(){
+	
+	int height[1005] = {0,};
+	
+	int have[100][100] = {0,};
+	for(int i=0;i<=30;i++){
+		height[i] = rand()%10 + 5;
+	}
+	
+	for(int i=0;i<30;i++){
+		gotoxy(50 , 10 + i);
+		for(int j=0;j<=30;j++){
+			if(i == 0 || i == 29 || j == 0 || j == 30){
+				putchar(boundary_skin);
+			}
+			else if(30 - i <= height[j]){
+				putchar('*');
+				have[i][j] = 1;
+			}
+			else{
+				putchar(' ');
+			}
+		}
+		putchar('\n');
+	}
+	
+	int sum = 0;
+	int x = 65, y = 11;
+	for(int i=0;i<5;i++){
+		gotoxy(60 , 6);
+		printf("Round: %d" , i + 1);
+		long double dur = 1e-18;
+		clock_t start = clock();
+		gotoxy(x , y);
+		putchar('&');
+		while(have[y - 10][x - 50] == 0 && y < 39){
+			if(kbhit()){
+				int prev = x;
+				char c = getch();
+				c = tolower(c);
+				if(c == 'a' && x > 52){
+					x--;
+				}
+				else if(c == 'd' && x < 78){
+					x++;
+				}
+				else if(c == 's'){
+					y++;
+				}
+				if(prev != x){
+					gotoxy(prev , y);
+					putchar(' ');
+					if((clock() - start)/CLOCKS_PER_SEC >= dur){
+						start = clock();
+						y++;
+					}
+					gotoxy(x , y);
+					putchar('&'); 
+					
+				}
+			}
+			else if((clock() - start)/CLOCKS_PER_SEC >= dur){
+				gotoxy(x , y);
+				putchar(' ');
+				y++;
+				gotoxy(x , y);
+				putchar('&'); 
+				start = clock();
+			}
+		}
+		
+		gotoxy(x , y);
+		putchar(' ');
+		if(x - 1 > 52){
+			gotoxy(x - 1, y);
+			putchar(' ');
+			gotoxy(x - 1, y - 1);
+			putchar(' ');
+			if(y + 1 < 38){
+				gotoxy(x - 1, y + 1);
+			putchar(' ');
+			}
+		}
+		if(x + 1 < 78){
+			gotoxy(x + 1, y);
+			putchar(' ');
+			gotoxy(x + 1, y - 1);
+			putchar(' ');
+			if(y + 1 < 38){
+				gotoxy(x + 1, y + 1);
+				putchar(' ');
+			}
+		}
+		if(y + 1 < 38){
+			gotoxy(x , y + 1);
+			putchar(' ');
+		}
+		gotoxy(x , y - 1);
+		putchar(' ');
+		
+		y = y - 10;
+		x = x - 50;
+		if(have[y][x] == 1){
+			sum++;
+			have[y][x] = 0;
+		}	
+		if(have[y][x + 1]  == 1){
+			sum++;
+			have[y][x + 1]  = 0;
+		}
+		if(have[y][x - 1]  == 1){
+			sum++;
+			have[y][x - 1] = 0;
+		}
+		if(have[y - 1][x - 1] == 1){
+			sum++;
+			have[y - 1][x - 1] = 0;
+		}
+		if(have[y - 1][x + 1] == 1){
+			sum++;
+			have[y - 1][x + 1] = 0;
+		}
+		if(have[y + 1][x] == 1){
+			sum++;
+			have[y + 1][x] = 0;
+		}
+		if(have[y - 1][x] == 1){
+			sum++;
+			have[y - 1][x] = 0;
+		}
+		if(have[y + 1][x - 1] == 1){
+			sum++;
+			have[y + 1][x - 1] = 0;
+		}
+		if(have[y + 1][x + 1] == 1){
+			sum++;
+			have[y + 1][x + 1] = 0;
+		}
+		x = 65;
+		y = 11;
+	}
+	return sum;
+}
+
 bool getinto_event(PLAYER player){
 	srand(time(NULL));
 	
 	if(mode == 2){  //mining
-		int i , j;
-		char tap;
-		int rate = 0;
-		int core_lv = core_lv_divide[player.y][player.x];
-		play_map[player.y][player.x] = ' ';
-		int increase_per_tap = 100/core_lv;
-		/*printf("%d" , increase_per_tap);
-		pause;*/
-		for(i=0;i<=10;i++){
-			for(j=0;j<=120;j++){
-				if(i == 0 || i == 10 || j == 0 || j == 120){
-					putchar('#');
-				}
-				else{
-					putchar(' ');
-				}
-			}
-			putchar('\n');
-		}
-		gotoxy(9 , 2);
-		printf("Press G to Mine or Press ESC to exit");
-		char t[1000];
-		for(i=0;i<increase_per_tap;i++){
-			t[i] = '*';
-		}
-		do{
-			tap = getch();
-			if(tap == 'G' || tap == 'g'){
-				gotoxy(rate + 5 , 5);
-				printf("%s" , t);
-				rate+=increase_per_tap;
-			}
-			else if(tap == ESC){
-				cls;
-				printf("The ore will still be destoryed...\n");
-				pause;
-				return;
-			}
-			
-		}while(rate < 100);
+		int s = new_mining();
+		int a = rand()%ore_in_each_lv[core_lv_divide[player.y][player.x]];
+		int i;
 		cls;
-		printf("Done!!");
-		Sleep(500);
-		cls;
-		int k = rand()%ore_in_each_lv[core_lv];
-		printf("You got %s.\n" , ore_list[core_lv][k]);
-		for(int i=1;i<=type_of_core;i++){
-			if(strcmp(ore_list[core_lv][k] , ore_code[i]) == 0){
-				ore_inventory[i]++;
+		for(i=1;i<=type_of_core;i++){
+			if(strcmp(ore_list[core_lv_divide[player.y][player.x]][a] , ore_code[i]) == 0){
+				ore_inventory[i] += s;
 				break;
 			}
+			
 		}
-		pause;
+		gotoxy(60 ,10);
+		printf("You have got %d %s\n" , s , ore_code[i]);
+		Sleep(1500);
 	}
-	
-	
-	else if(mode == 3){  //huntung monster
+	else if(mode == 3){
 		printf("\t\tpress Y to ready..");
 		char cmd;
 		do{
@@ -1413,143 +1512,6 @@ void skill_point(PLAYER player){
 	}
 }
 
-int new_mining(){
-	
-	int height[1005] = {0,};
-	
-	int have[100][100] = {0,};
-	for(int i=0;i<=30;i++){
-		height[i] = rand()%10 + 5;
-	}
-	
-	for(int i=0;i<30;i++){
-		gotoxy(50 , 10 + i);
-		for(int j=0;j<=30;j++){
-			if(i == 0 || i == 29 || j == 0 || j == 30){
-				putchar(boundary_skin);
-			}
-			else if(30 - i <= height[j]){
-				putchar('*');
-				have[i][j] = 1;
-			}
-			else{
-				putchar(' ');
-			}
-		}
-		putchar('\n');
-	}
-	
-	int sum = 0;
-	int x = 65, y = 11;
-	for(int i=0;i<5;i++){
-		
-		long double dur = 1e-9;
-		clock_t start = clock();
-		gotoxy(x , y);
-		putchar('&');
-		while(height[x - 50] <= 40 - y){
-			if(kbhit()){
-				int prev = x;
-				char c = getch();
-				c = tolower(c);
-				if(c == 'a' && x > 51 && 40 - y > height[x - 51]){
-					x--;
-				}
-				else if(c == 'd' && x < 79 && 40 - y > height[x - 49]){
-					x++;
-				}
-				else if(c == 's'){
-					gotoxy(x , y);
-					putchar(' ');
-					y++;
-					gotoxy(x , y);
-					putchar('&'); 
-				}
-				if(prev != x){
-					gotoxy(prev , y);
-					putchar(' ');
-					if((clock() - start)/CLOCKS_PER_SEC >= dur){
-						start = clock();
-						y++;
-					}
-					gotoxy(x , y);
-					putchar('&'); 
-					
-				}
-			}
-			else if((clock() - start)/CLOCKS_PER_SEC >= dur){
-				gotoxy(x , y);
-				putchar(' ');
-				y++;
-				gotoxy(x , y);
-				putchar('&'); 
-				start = clock();
-			}
-		}
-		
-		gotoxy(x , y);
-		putchar(' ');
-		gotoxy(x - 1, y);
-		putchar(' ');
-		gotoxy(x + 1, y);
-		putchar(' ');
-		gotoxy(x - 1, y - 1);
-		putchar(' ');
-		gotoxy(x - 1, y + 1);
-		putchar(' ');
-		gotoxy(x + 1, y - 1);
-		putchar(' ');
-		gotoxy(x + 1, y + 1);
-		putchar(' ');
-		gotoxy(x , y + 1);
-		putchar(' ');
-		gotoxy(x , y - 1);
-		putchar(' ');
-		
-		y = y - 10;
-		x = x - 50;
-		if(have[y][x] == 1){
-			sum++;
-			have[y][x] = 0;
-		}	
-		if(have[y][x + 1]  == 1){
-			sum++;
-			have[y][x + 1]  = 0;
-		}
-		if(have[y][x - 1]  == 1){
-			sum++;
-			have[y][x - 1] = 0;
-		}
-		if(have[y - 1][x - 1] == 1){
-			sum++;
-			have[y - 1][x - 1] = 0;
-		}
-		if(have[y - 1][x + 1] == 1){
-			sum++;
-			have[y - 1][x + 1] = 0;
-		}
-		if(have[y + 1][x] == 1){
-			sum++;
-			have[y + 1][x] = 0;
-		}
-		if(have[y - 1][x] == 1){
-			sum++;
-			have[y - 1][x] = 0;
-		}
-		if(have[y + 1][x - 1] == 1){
-			sum++;
-			have[y + 1][x - 1] = 0;
-		}
-		if(have[y + 1][x + 1] == 1){
-			sum++;
-			have[y + 1][x + 1] = 0;
-		}
-		x += 50;
-		y += 10;
-	}
-	return sum;
-}
-
 int main(){
 	
 	//initiallize
@@ -1614,7 +1576,6 @@ int main(){
 				putchar(main_character);
 				player.y--;
 				gotoxy(map_lower_x , map_lower_y);
-				Beep(frequency , duration);
 			}
 			else if(play_map[player.y - 1][player.x] == 'A'){
 				cls;
@@ -1628,7 +1589,6 @@ int main(){
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y - 1][player.x] == 'C'){  //choosing what area to go
-				Beep(300 , 10);
 				cls;
 				int select = choose_area();
 				if(select == 1){  //mining
@@ -1664,7 +1624,6 @@ int main(){
 			else if(play_map[player.y - 1][player.x] == 'O'){ //going back to main hall
 				player.x = saver.x;
 				player.y = saver.y;
-				Beep(300 , 10);
 				map_information = map_driver(1 , player);
 				cls;
 				map_runner(map_information , player);
@@ -1681,7 +1640,6 @@ int main(){
 				putchar(main_character);
 				player.y++;
 				gotoxy(map_lower_x , map_lower_y);
-				Beep(frequency ,  duration);
 			}
 			else if(play_map[player.y + 1][player.x] == 'A'){
 				cls;
@@ -1695,7 +1653,6 @@ int main(){
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y + 1][player.x] == 'C'){  //choosing what area to go
-				Beep(300 , 10);
 				cls;
 				int select = choose_area();
 				if(select == 1){  //mining
@@ -1729,7 +1686,6 @@ int main(){
 				}
 			}
 			else if(play_map[player.y + 1][player.x] == 'O'){ //going back to main hall
-				Beep(300 , 10);
 				player.x = saver.x;
 				player.y = saver.y;
 				map_information = map_driver(1 , player);
@@ -1748,7 +1704,6 @@ int main(){
 				putchar(main_character);
 				player.x--;
 				gotoxy(map_lower_x , map_lower_y);
-				Beep(frequency ,  duration);
 			}
 			else if(play_map[player.y][player.x - 1] == 'A'){
 				cls;
@@ -1762,7 +1717,6 @@ int main(){
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x - 1] == 'C'){  //choosing what area to go
-				Beep(300 , 10);
 				cls;
 				int select = choose_area();
 				if(select == 1){  //mining
@@ -1796,7 +1750,6 @@ int main(){
 				}
 			}
 			else if(play_map[player.y][player.x - 1] == 'O'){ //going back to main hall
-				Beep(300 , 10);
 				player.x = saver.x;
 				player.y = saver.y;
 				map_information = map_driver(1 , player);
@@ -1817,7 +1770,6 @@ int main(){
 				putchar(main_character);
 				player.x++;
 				gotoxy(map_lower_x , map_lower_y);
-				Beep(frequency ,  duration);
 			}
 			else if(play_map[player.y][player.x + 1] == 'A'){
 				cls;
@@ -1831,7 +1783,6 @@ int main(){
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x + 1] == 'C'){  //choosing what area to go
-				Beep(300 , 10);
 				cls;
 				int select = choose_area();
 				if(select == 1){  //mining
@@ -1845,7 +1796,6 @@ int main(){
 					first_into_map = true;
 				}
 				else if(select == 2){  //hunting
-					Beep(300 , 10);
 					cls;
 					saver.x = player.x;
 					saver.y = player.y;
@@ -1868,7 +1818,6 @@ int main(){
 				}
 			}
 			else if(play_map[player.y][player.x + 1] == 'O'){ //going back to main hall
-				Beep(300 , 10);
 				player.x = saver.x;
 				player.y = saver.y;
 				map_information = map_driver(1 , player);
