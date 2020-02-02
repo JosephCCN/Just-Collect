@@ -71,7 +71,6 @@ typedef struct{
 
 char play_map[1000][1000];
 int core_lv_divide[1000][1000]; //only for map 2 i.e. mining area
-char admin_list[100][100] = {"test" , "joseph" , "ian"};
 char ore_list[101][100][100] = {
 
 {},
@@ -113,7 +112,7 @@ void string_input(char str[] , int max_len , bool hide){
 			return;
 		}
 		ch = tolower(ch);
-		if((33 > ch || ch > 127) && ch != '\r' && ch != '\b') continue;
+		if((33 > ch || ch > 127) && ch != '\r' && ch != '\b' && ch < 0) continue;
 		if(ch == '\r'){
 			putchar('\n');
 			break;
@@ -634,7 +633,8 @@ MAP map_driver(int code , PLAYER player){
 	strcpy(play_map[lim_i+3] , "I: Open player information");
 	strcpy(play_map[lim_i+4] , "M: Mission System");
 	strcpy(play_map[lim_i+5] , "O: Skill Points");
-	re.x+=6;
+	strcpy(play_map[lim_i+6] , "Q: Setting");
+	re.x+=7;
 	return re;
 }
 
@@ -712,6 +712,15 @@ void updater(PLAYER player){
 	fprintf(file , "\n%d %d\n%d\n" , a , b , c);
 	for(int i=1;i<=4;i++) fprintf(file , "%d " , skillpoint[i]);
 	fclose(file);
+	
+	char str[1000];
+	sprintf(str , "setting_%s.txt" , player_ac);
+	file = fopen(str , "w");
+	fprintf(file , "main_character_skin=%c\n" , main_character);
+	fprintf(file , "boundary_skin=%c\n" , boundary_skin);
+	fprintf(file , "text_color=%d\n" , text_color);
+	fprintf(file , "Up=%c\nDown=%c\nLeft=%c\nRight=%c" , up , down , left , right);
+	fclose(file);
 	return ;
 }
 
@@ -737,8 +746,6 @@ int choose_area(){
 		}
 	}while(cmd != '\r' && cmd != ESC);
 	if(cmd == ESC){
-		//printf("esc\n");
-		//Sleep(500);
 		return -99999;
 	}
 	return select;
@@ -791,6 +798,7 @@ void command_promte(PLAYER *player){
 			int k;
 			scanf("%d" , &k);
 			if(1 <= k && k <= 255){
+				text_color = k;
 				color(k);
 				printf("Done\n");
 			}
@@ -1512,6 +1520,104 @@ void skill_point(PLAYER player){
 	}
 }
 
+void setting(){
+	int x = 30, y = 0;
+	char c;
+	void ps(){
+		printf("Main Character Skin:    %c\n" , main_character);
+		printf("Boundary Skin:          %c\n" , boundary_skin);
+		printf("Up:                     %c\n" , up );
+		printf("Down:                   %c\n" , down);
+		printf("Left:                   %c\n" , left);
+		printf("Right:                  %c\n" , right);
+		printf("Change Password");
+	}
+	ps();
+	do{
+		
+		gotoxy(x , y);
+		putchar('<');
+		c = getch();
+		c = tolower(c);
+		if(c == 's' && y < 6){
+			gotoxy(x , y);
+			putchar(' ');
+			y++;
+		}
+		else if(c == 'w' && y > 0){
+			gotoxy(x , y);
+			putchar(' ');
+			y--;
+		}
+		else if(c == '\r'){
+			if(y < 6){
+				c = getch();
+				c = tolower(c);
+				if(c != 'q' && c != 't' && c != 'i' && c != 'm' && c != 'o' &&  c != 'p'){
+					gotoxy(24 , y);
+					putchar(' ');
+					gotoxy(24 , y);
+					putchar(c);
+					switch(y){
+						case 0:
+							main_character = c;
+							break;
+						case 1:
+							boundary_skin = c;
+							break;
+						case 2:
+							up = c;
+							break;
+						case 3:
+							down = c;
+							break;
+						case 4:
+							left = c;
+							break;
+						case 5:
+							right = c;
+							break;
+					}
+				}
+				
+			}
+			else if(y == 6){
+				cls;
+				char new_password[1001];
+				printf("Please enter your new password:");
+				string_input(new_password , 1000 , false);
+				if(!string_cmp("GoToHomePage_Code:100" , new_password)){
+					int i;
+					char str[1000];
+					char tmp[1000][1000];
+					sprintf(str , "%s.txt" , player_ac);
+					FILE *fp;
+					fp = fopen(str , "r");
+					for(i=0;fscanf(fp , "%s\n" , tmp[i]) != EOF;){
+						i++;
+					}
+					fclose(fp);
+					fp = fopen(str , "w");
+					if(check_admin(player_ac)){
+						strcpy(tmp[1] , new_password);
+					}
+					else{
+						strcpy(tmp[0] , new_password);
+					}
+					for(int j=0;j<i;j++){
+						fprintf(fp , "%s\n" , tmp[j]);
+					}
+					fclose(fp);
+					printf("Done");
+					Sleep(1000);
+				}
+				cls;
+				ps();
+			}
+		}
+	}while(c != ESC);
+}
+
 int main(){
 	
 	//initiallize
@@ -1519,12 +1625,14 @@ int main(){
 	char consoletitle[200] = "Just Collect";
 	SetConsoleTitle((wchar_t*)consoletitle);
 	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
+	
 	COORD sizeOfBuff;
 	sizeOfBuff.X=300;
 	sizeOfBuff.Y=300;
 	SetConsoleScreenBufferSize(buff,sizeOfBuff);
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
+	
 	
 	if(fopen("cheatison.txt" , "r")){
 		new_mining();
@@ -1876,6 +1984,12 @@ int main(){
 		else if(move_cmd == 'O' || move_cmd == 'o'){
 			cls;
 			skill_point(player);
+			cls;
+			map_runner(map_information , player);
+		}
+		else if(move_cmd == 'Q' || move_cmd == 'q'){
+			cls;
+			setting();
 			cls;
 			map_runner(map_information , player);
 		}
