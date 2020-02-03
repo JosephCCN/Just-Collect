@@ -104,6 +104,7 @@ int map_lower_x , map_lower_y;
 int mode = 1;
 
 void string_input(char str[] , int max_len , bool hide){
+	memset(str , '\0' , sizeof(str)/sizeof(char));
 	int pt = 0;
 	while(1){
 		char ch = getch();
@@ -145,9 +146,11 @@ int admin_page_class(int line){
 	printf("Search player information\n");
 	printf("Change player data\n");
 	printf("Delete player account\n");
+	printf("Add Admin\n");
+	printf("Delete Admin\n");
 	printf("Exit");
 	char cmd;
-	int services = 5;
+	int services = 7;
 	
 	do{
 		gotoxy(30 , line);
@@ -318,7 +321,89 @@ void admin_page(){
 			pause;
 			cls;
 		}
-	}while(choose != 5);
+		else if(choose == 5){
+			cls;
+			printf("Please input user name:");
+			char name[1000];
+			char file_name[1000];
+			string_input(name , 100 , false);
+			sprintf(file_name , "%s.txt" , name);
+			if(access(file_name , F_OK) == -1){
+				printf("No such user");
+				Sleep(1000);
+				cls;
+			}
+			else if(string_cmp(player_ac , name)){
+				printf("Cannot be yourself");
+				Sleep(1000);
+				cls;
+			}
+			else{
+				int i = 0;
+				FILE *fp = fopen(file_name , "r");
+				char tmp[1000][1000];
+				while(fscanf(fp , "%s\n" , tmp[i]) != EOF){
+					i++;
+				}
+				fclose(fp);
+				if(string_cmp(tmp[0] , "ADMIN")){
+					printf("Already admin!!");
+				}
+				else{
+					fp = fopen(file_name , "w");
+					fprintf(fp , "ADMIN\n");
+					for(int j=0;j<i;j++){
+						fprintf(fp , "%s\n" , tmp[j]);
+					}
+					fclose(fp);
+					printf("Done");
+				}
+				Sleep(1000);
+				cls;
+			}
+		}
+		else if(choose == 6){
+			cls;
+			char str[1000];
+			printf("Please input admin account:");
+			string_input(str , 100 , false);
+			char filename[1000];
+			sprintf(filename , "%s.txt" , str);
+			if(access(filename , F_OK) == -1){
+				printf("No such user");
+				Sleep(1000);
+				cls;
+			}
+			else if(string_cmp(player_ac , str)){
+				printf("Cannot be yourself");
+				Sleep(1000);
+				cls;
+			}
+			else{
+				FILE *fp = fopen(filename , "r");
+				int i = 0;
+				char tmp[1000][1000];
+				while(fscanf(fp , "%s\n" , tmp[i]) != EOF){
+					i++;
+				}
+				fclose(fp);
+				if(string_cmp(tmp[0] , "ADMIN")){
+					fp = fopen(filename , "w");
+					for(int j = 1;j<i;j++){
+						fprintf(fp , "%s\n" , tmp[j]);
+					}
+					fclose(fp);
+					printf("Done");
+					Sleep(1000);
+				}
+				else{
+					printf("This is not an admin account");
+					Sleep(1000);
+				}
+				cls;
+			}
+		}
+	}while(choose != 7);
 	puts("Bye...");
 	Sleep(500);
 	cls;
