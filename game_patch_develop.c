@@ -85,6 +85,7 @@ char ore_code[100][100] = {"You find a Easter EGG" , "Blue Ore" , "Red Ore" , "I
 int ore_inventory[100];
 
 PLAYER coop;
+int global_code;
 int total_monster_kill;
 int monster_counting;
 int skillpoint[5];
@@ -144,13 +145,12 @@ int admin_page_class(int line){
 	printf("Please select:\n");
 	printf("Check all players information\n");
 	printf("Search player information\n");
-	printf("Change player data\n");
 	printf("Delete player account\n");
 	printf("Add Admin\n");
 	printf("Delete Admin\n");
 	printf("Exit");
 	char cmd;
-	int services = 7;
+	int services = 6;
 	
 	do{
 		gotoxy(30 , line);
@@ -274,13 +274,8 @@ void admin_page(){
 			fclose(fp);
 			pause;
 			cls;
-		}
-		else if(choose == 3){
-			printf("I am so lazy, therefore I will make it later\n");
-			pause;
-			cls;
 		} 
-		else if(choose == 4){
+		else if(choose == 3){
 			char name[10005];
 			printf("Please input a player username:");
 			scanf("%s" , name);
@@ -321,7 +316,7 @@ void admin_page(){
 			pause;
 			cls;
 		}
-		else if(choose == 5){
+		else if(choose == 4){
 			cls;
 			printf("Please input user name:");
 			char name[1000];
@@ -362,7 +357,7 @@ void admin_page(){
 				cls;
 			}
 		}
-		else if(choose == 6){
+		else if(choose == 5){
 			cls;
 			char str[1000];
 			printf("Please input admin account:");
@@ -403,7 +398,7 @@ void admin_page(){
 				cls;
 			}
 		}
-	}while(choose != 7);
+	}while(choose != 6);
 	puts("Bye...");
 	Sleep(500);
 	cls;
@@ -660,6 +655,7 @@ int ore_lv_chooser(int a){
 }
 
 MAP map_driver(int code , PLAYER player){
+	
 	srand(time(NULL));
 	mode = code;
 	//cls;
@@ -1121,12 +1117,13 @@ int new_mining(){
 	for(int i=0;i<5;i++){
 		gotoxy(60 , 6);
 		printf("Round: %d" , i + 1);
-		long double dur = 1e-18;
-		clock_t start = clock();
+		int dur = 5000;
+		int tm = 0;
 		gotoxy(x , y);
 		putchar('&');
 		while(have[y - 10][x - 50] == 0 && y < 39){
 			if(kbhit()){
+				tm-=100;
 				int prev = x;
 				char c = getch();
 				c = tolower(c);
@@ -1136,29 +1133,26 @@ int new_mining(){
 				else if(c == 'd' && x < 78){
 					x++;
 				}
-				else if(c == 's'){
-					y++;
-				}
 				if(prev != x){
 					gotoxy(prev , y);
 					putchar(' ');
-					if((clock() - start)/CLOCKS_PER_SEC >= dur){
-						start = clock();
+					if(tm >= dur){
+						tm = 0;
 						y++;
 					}
 					gotoxy(x , y);
 					putchar('&'); 
-					
 				}
 			}
-			else if((clock() - start)/CLOCKS_PER_SEC >= dur){
+			else if(tm >= dur){
 				gotoxy(x , y);
 				putchar(' ');
 				y++;
 				gotoxy(x , y);
 				putchar('&'); 
-				start = clock();
+				tm = 0;
 			}
+			tm++;
 		}
 		
 		gotoxy(x , y);
@@ -1238,6 +1232,7 @@ bool getinto_event(PLAYER player){
 	srand(time(NULL));
 	
 	if(mode == 2){  //mining
+		play_map[player.y][player.x] = ' ';
 		int s = new_mining();
 		int a = rand()%ore_in_each_lv[core_lv_divide[player.y][player.x]];
 		int i;
@@ -1251,6 +1246,7 @@ bool getinto_event(PLAYER player){
 		}
 		gotoxy(60 ,10);
 		printf("You have got %d %s\n" , s , ore_code[i]);
+		
 		Sleep(1500);
 	}
 	else if(mode == 3){
@@ -1605,7 +1601,7 @@ void skill_point(PLAYER player){
 	}
 }
 
-void setting(){
+void setting(PLAYER player){
 	int x = 30, y = 0;
 	char c;
 	void ps(){
@@ -1638,7 +1634,7 @@ void setting(){
 			if(y < 6){
 				c = getch();
 				c = tolower(c);
-				if(c != 'q' && c != 't' && c != 'i' && c != 'm' && c != 'o' &&  c != 'p'){
+				if(c != 'q' && c != 't' && c != 'i' && c != 'm' && c != 'o' &&  c != 'p' && c != up && c != down && c != left && c != right){
 					gotoxy(24 , y);
 					putchar(' ');
 					gotoxy(24 , y);
@@ -1649,6 +1645,7 @@ void setting(){
 							break;
 						case 1:
 							boundary_skin = c;
+							map_driver(mode , player);
 							break;
 						case 2:
 							up = c;
@@ -1707,10 +1704,11 @@ int main(){
 	
 	//initiallize
 	srand(time(NULL));
+	
 	char consoletitle[200] = "Just Collect";
 	SetConsoleTitle((wchar_t*)consoletitle);
-	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
 	
+	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD sizeOfBuff;
 	sizeOfBuff.X=300;
 	sizeOfBuff.Y=300;
@@ -1727,6 +1725,7 @@ int main(){
 	while(!login_class()){
 		cls;
 	}
+	
 	
 	color(text_color);
 	
@@ -2074,7 +2073,7 @@ int main(){
 		}
 		else if(move_cmd == 'Q' || move_cmd == 'q'){
 			cls;
-			setting();
+			setting(player);
 			cls;
 			map_runner(map_information , player);
 		}
