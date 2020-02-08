@@ -1088,22 +1088,13 @@ CI new_combat(){
 
 int new_mining(){
 	
-	int height[1005] = {0,};
 	
-	int have[100][100] = {0,};
-	for(int i=0;i<=30;i++){
-		height[i] = rand()%10 + 5;
-	}
 	
 	for(int i=0;i<30;i++){
 		gotoxy(50 , 10 + i);
 		for(int j=0;j<=30;j++){
 			if(i == 0 || i == 29 || j == 0 || j == 30){
 				putchar(boundary_skin);
-			}
-			else if(30 - i <= height[j]){
-				putchar('*');
-				have[i][j] = 1;
 			}
 			else{
 				putchar(' ');
@@ -1115,22 +1106,44 @@ int new_mining(){
 	int sum = 0;
 	int x = 65, y = 11;
 	for(int i=0;i<5;i++){
+		int pt = 0;
+		int m_x[100] = {0,};
+		int m_y[100] = {0,};
+		int mm[100][100] = {0,};
+		int t = rand()%7 + 3;
+		int t_y = 13;
+		while(t_y < 39){
+			int tp = 51 + rand()%29;
+			gotoxy( tp , t_y);
+			putchar('*');
+			m_x[pt] = tp;
+			m_y[pt] = t_y;
+			mm[t_y][tp] = 1;
+			pt++;
+			t_y+=(30/t);
+			
+		}
+		
 		gotoxy(60 , 6);
 		printf("Round: %d" , i + 1);
-		int dur = 5000;
+		int dur = 7000;
 		int tm = 0;
 		gotoxy(x , y);
 		putchar('&');
-		while(have[y - 10][x - 50] == 0 && y < 39){
+		while(y < 39){
+			if(mm[y][x] == 1){
+				sum++;
+				mm[y][x] = 0;
+			}
 			if(kbhit()){
-				tm-=100;
+				tm-=1000;
 				int prev = x;
 				char c = getch();
 				c = tolower(c);
-				if(c == 'a' && x > 52){
+				if(c == 'a' && x > 51){
 					x--;
 				}
-				else if(c == 'd' && x < 78){
+				else if(c == 'd' && x < 79){
 					x++;
 				}
 				if(prev != x){
@@ -1154,73 +1167,11 @@ int new_mining(){
 			}
 			tm++;
 		}
-		
 		gotoxy(x , y);
-		putchar(' ');
-		if(x - 1 > 52){
-			gotoxy(x - 1, y);
+		putchar(boundary_skin);
+		for(int j=0;j<pt;j++){
+			gotoxy(m_x[j] , m_y[j]);
 			putchar(' ');
-			gotoxy(x - 1, y - 1);
-			putchar(' ');
-			if(y + 1 < 38){
-				gotoxy(x - 1, y + 1);
-			putchar(' ');
-			}
-		}
-		if(x + 1 < 78){
-			gotoxy(x + 1, y);
-			putchar(' ');
-			gotoxy(x + 1, y - 1);
-			putchar(' ');
-			if(y + 1 < 38){
-				gotoxy(x + 1, y + 1);
-				putchar(' ');
-			}
-		}
-		if(y + 1 < 38){
-			gotoxy(x , y + 1);
-			putchar(' ');
-		}
-		gotoxy(x , y - 1);
-		putchar(' ');
-		
-		y = y - 10;
-		x = x - 50;
-		if(have[y][x] == 1){
-			sum++;
-			have[y][x] = 0;
-		}	
-		if(have[y][x + 1]  == 1){
-			sum++;
-			have[y][x + 1]  = 0;
-		}
-		if(have[y][x - 1]  == 1){
-			sum++;
-			have[y][x - 1] = 0;
-		}
-		if(have[y - 1][x - 1] == 1){
-			sum++;
-			have[y - 1][x - 1] = 0;
-		}
-		if(have[y - 1][x + 1] == 1){
-			sum++;
-			have[y - 1][x + 1] = 0;
-		}
-		if(have[y + 1][x] == 1){
-			sum++;
-			have[y + 1][x] = 0;
-		}
-		if(have[y - 1][x] == 1){
-			sum++;
-			have[y - 1][x] = 0;
-		}
-		if(have[y + 1][x - 1] == 1){
-			sum++;
-			have[y + 1][x - 1] = 0;
-		}
-		if(have[y + 1][x + 1] == 1){
-			sum++;
-			have[y + 1][x + 1] = 0;
 		}
 		x = 65;
 		y = 11;
@@ -1718,7 +1669,9 @@ int main(){
 	
 	
 	if(fopen("cheatison.txt" , "r")){
-		new_mining();
+		int a = new_mining();
+		cls;
+		printf("%d" , a);
 		return 0;
 	}
 	
