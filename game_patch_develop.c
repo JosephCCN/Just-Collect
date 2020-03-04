@@ -89,7 +89,7 @@ int global_code;
 int total_monster_kill;
 int monster_counting;
 int skillpoint[5];
-char main_character;
+char main_character = '@';
 char boundary_skin = '#';
 int text_color;
 char narrow;
@@ -465,7 +465,7 @@ void register_f(){
 	string_input(user_name , 100 , false);
 	sprintf(file_name , "%s.txt" , user_name);
 	
-	if(fopen(file_name , "r")){
+	if(access( file_name, F_OK ) != -1 ){
 		printf("user already registered!!\n");
 		pause;
 		return ;
@@ -833,10 +833,10 @@ int choose_area(){
 }
 
 
-void command_promte(PLAYER *player){
+void command_promte_admin(PLAYER *player){
 	char cmd[1000] , input;
 	int quantity , i;
-	printf("Command Prompt:\n");
+	printf("Command Prompt For Admin:\n");
 	do{
 		scanf("%s" , cmd);
 		if(strcmp(cmd , "inventory") == 0){
@@ -887,9 +887,9 @@ void command_promte(PLAYER *player){
 				printf("out of bound\n");
 			}
 		}
-		else if(strcmp(cmd , "admin_page") == 0){
+		else if(strcmp(cmd , "admin") == 0){
 			admin_page();
-			printf("Command Prompt:\n");
+			printf("Command Prompt For Admin:\n");
 		}
 		else if(strcmp(cmd , "update") == 0){
 			updater(*player);
@@ -974,6 +974,205 @@ void command_promte(PLAYER *player){
 	}while(!string_cmp(cmd , "exit"));
 }
 
+
+void command_promte_user(PLAYER *player){
+	char cmd[1000] , input;
+	int quantity , i;
+	printf("Command Prompt For User:\n");
+	do{
+		scanf("%s" , cmd);
+		if(strcmp(cmd , "color") == 0){
+			int k;
+			scanf("%d" , &k);
+			if(1 <= k && k <= 255){
+				text_color = k;
+				color(k);
+				printf("Done\n");
+			}
+			else{
+				printf("out of bound\n");
+			}
+		}
+		else if(strcmp(cmd , "update") == 0){
+			updater(*player);
+			printf("Done\n");
+		}
+		else if(strcmp(cmd , "EGG") == 0){
+			int input;
+			scanf(" %d" , &input);
+			if(input == 1317795){
+				printf("You find the Easter egg...\n");
+				//the animation will be make
+			}
+		}
+		else if(strcmp(cmd , "end" ) == 0){
+			printf("hard end game");
+			exit(0);
+		} 
+		else if(strcmp(cmd , "ore_code") == 0){
+			int k;
+			scanf("%d" , &k);
+			if(k <= type_of_core){
+				printf("%s\nDone\n" , ore_code[k]);
+			}
+			else {
+				printf("Out of bound...\n");
+			}
+		}
+		else if(strcmp(cmd , "open_inventory") == 0){
+			open_inventory();
+			printf("Done\n");
+		}
+		else{
+			printf("Unkown Command\n");
+		}
+	}while(!string_cmp(cmd , "exit"));
+}
+
+CI new_combat_2(){
+	
+	int combat_map[100][100] = {0,};
+	int path_x = 65, path_y = 11;
+	int upperbound_x = 79 , lowerbound_x = 51;
+	while(path_y < 39){
+		int turn = rand()%2;
+		if((turn == 1 || path_x - lowerbound_x <= 1) && upperbound_x - path_x >= 1){  //right
+			//puts("Right");
+			int max_turn = min(upperbound_x - path_x , 39 - path_y );
+			int turn_ratio;
+			if(max_turn <= 3){
+				turn_ratio = rand()%max_turn + 1;
+			}
+			else{
+				turn_ratio = rand()%(max_turn - 3) + 3;
+			}
+			turn_ratio = min(5 , turn_ratio);
+			for(int i=0;i<turn_ratio;i++){
+				//printf("%d %d\n" , path_x , path_y);
+				/*if(rand()%10 == 0){  //1/10 chance
+					path_x++;
+					i++;
+				}*/ 
+				combat_map[path_x][path_y] = 1;
+				combat_map[path_x - 1][path_y] = 1;
+				combat_map[path_x + 1][path_y] = 1;
+				path_x++;
+				path_y++;
+			}
+		}
+		else{ //left
+			//puts("Left");
+			int max_turn = min(lowerbound_x - path_x , 39 - path_y );
+			int turn_ratio;
+			if(max_turn <= 3){
+				turn_ratio = rand()%max_turn + 1;
+			}
+			else{
+				turn_ratio = rand()%(max_turn - 3) + 3;
+			}
+			turn_ratio = min(5 , turn_ratio);
+			for(int i=0;i<turn_ratio;i++){
+				//printf("%d %d\n" , path_x , path_y);
+				/*if(rand()%10 == 0){  //1/10 chance
+					path_x--;
+					i++;
+				}*/
+				combat_map[path_x][path_y] = 1;
+				combat_map[path_x - 1][path_y] = 1;
+				combat_map[path_x + 1][path_y] = 1;
+				path_x--;
+				path_y++;
+			}
+		}
+	}
+	
+	//print map
+	for(int i=0;i<30;i++){
+		gotoxy(50 , 10 + i);
+		for(int j=0;j<=30;j++){
+			if(i == 0 || i == 29 || j == 0 || j == 30||combat_map[j + 50][i  + 10] == 0){
+				putchar(boundary_skin);
+			}
+			else{
+				putchar(' ');
+			}
+		}
+		putchar('\n');
+	}
+	gotoxy(63 , 6);
+	for(int i=0;i<5;i++){
+		putchar(boundary_skin);
+	}
+	for(int i=7;i<10;i++){
+		gotoxy(63 , i);
+		putchar(boundary_skin);
+		gotoxy(67 , i);
+		putchar(boundary_skin);
+	}
+	gotoxy(63 , 10);
+	for(int i=0;i<5;i++){
+		putchar(' ');
+	}
+	//start play
+	int x = 65 , y = 7;
+	int count = 0;
+	int count_y_plus = 1e4;
+	CI re;
+	re.hurt = false;
+	gotoxy(x , y);
+	putchar(main_character);
+	//pause;
+	int line_report = 0;
+	while(y < 11){
+		count++;
+		//pause;
+		if(count >= 1e8){
+			count = 0;
+			gotoxy(x , y);
+			putchar(' ');
+			y++;
+			gotoxy(x , y);
+			putchar(main_character);
+		}
+	}
+	while(y < 39){
+		count++;
+		if(combat_map[x][y] == 0){
+			gotoxy(0 , line_report);
+			printf("%d %d" , x , y);
+			line_report++;
+			re.hurt = true;
+			break;
+		}
+		if(kbhit()){
+			char cmd = getch();
+			cmd = tolower(cmd); 
+			if(cmd == 'a'){
+				gotoxy(x , y);
+				putchar(' ');
+				x--;
+				gotoxy(x , y);
+				putchar(main_character);
+			}
+			else if(cmd == 'd'){
+				gotoxy(x , y);
+				putchar(' ');
+				x++;
+				gotoxy(x , y);
+				putchar(main_character);
+			}
+		}	
+		if(count >= count_y_plus){
+			count = 0;
+			gotoxy(x , y);
+			putchar(' ');
+			y++;
+			gotoxy(x , y);
+			putchar(main_character);
+		}
+	}
+	return re;
+}
 
 CI new_combat(){
 	int i , j;
@@ -1201,47 +1400,66 @@ bool getinto_event(PLAYER player){
 		Sleep(1500);
 	}
 	else if(mode == 3){
-		printf("\t\tpress Y to ready..");
+		printf("\t\t\t\tpress Y to ready..");
 		char cmd;
 		do{
 			cmd = getch();
 		}while(cmd != 'Y' && cmd != 'y');
 		cls;
-		printf("\t\tStart!!");
+		printf("\t\t\t\tStart!!");
 		Sleep(100);
 		cls;
 		int max_str_length = 5;  //max generate string length
-		int max_damage = player.health * 0.2; //max damage monster can hit
+		int max_damage = player.health * 0.5; //max damage monster can hit
 		int i , j;
 		int monster_health = rand()%player.weapon_val * 3 + player.weapon_val * 2;
 		
 		player.weapon_val+=skillpoint[1]*2;
 		player.health += skillpoint[2]*5;
 		player.defence += skillpoint[3]*2;
-		
+		double crit_constant = 1.01395948;  //10^(log(4)/100)
+		int crit_chance = min(40 , (int)(pow(crit_constant , skillpoint[4]) * 10));
+		cls;
+		gotoxy(65 , 10);
+		printf("Health:%d" , player.health);
+		gotoxy(65 , 11);
+		printf("Monster Health:%d" , max(monster_health , 0));
+		gotoxy(65 , 12);
+		pause;
+		cls;
 		while(monster_health > 0 && player.health > 0){
 			CI k;
-			k = new_combat();
+			k = new_combat_2();
+			int damage = 0;
+			bool crit = false;
 			if(k.hurt){
-				player.health -= max(0 , (rand()%max_damage + 1) - player.defence);
+				damage = (rand()%max_damage + 1) - player.defence;
+				damage = max(0 , damage);
+				player.health -= damage;
 			}
 			else{
-				int time_spend = (int)(k.time_spend * 10);
-				monster_health -= k.time_spend*player.weapon_val;
+				monster_health -= player.weapon_val;
+				if((rand()%100) + 1 < crit_chance){
+					monster_health -= player.weapon_val;
+					crit = true;
+				}
 			}
 			cls;
-			gotoxy(11 , 10);
+			gotoxy(65 , 10);
 			printf("Health:%d" , player.health);
-			gotoxy(11 , 11);
+			gotoxy(65 , 11);
 			printf("Monster Health:%d" , max(monster_health , 0));
-			gotoxy(11 , 12);
+			gotoxy(65 , 12);
 			if(k.hurt){
-				puts("You have taken damage!!");
+				printf("You have taken %d damage!!\n" ,damage);
+			}
+			else if(crit){
+				puts("You do crit damage to monster!!");
 			}
 			else{
 				puts("You hit the monster!!");
 			}
-			gotoxy(11 , 13);
+			gotoxy(65 , 13);
 			pause;
 			cls;
 		}
@@ -1275,77 +1493,127 @@ void open_information(PLAYER player){
 	return ;
 }
 
-void trading(){
-	
-	void print_lines(){
-		cls;
-		printf("\t\tWelcome to the market!!\n");
-		printf("Trade Alphabet\n");
-		printf("Stay tuned");
-		gotoxy(20 , 1);
-		putchar('<');
+void ENDING(PLAYER player){
+	int line = 0;
+	cls;
+	char str1[1005] = "This is the end of the game\nBut this is not the end of your advanture,\ntry to find all the secret in this game\n"; 
+	char str2[1005] = "It is not easy to finish a game alone,\nI need to thanks every one that helped to devlop the game.\n";
+	char str3[1005] = "And this is your statistics:\n";
+	char str4[1005] = "I hope you enjoy the game, press any key to continue";
+	gotoxy(60 , 0);
+	for(int i=0;i<strlen(str1);i++){
+		putchar(str1[i]);
+		if(str1[i] == '\n'){
+			line++;
+			gotoxy(60 , line);
+			Sleep(200);
+		}
+		Sleep(100);
 	}
-	
-	int line = 1;
-	int max_line = 2;
-	char cmd;
-	print_lines();
-	do{
-		cmd = getch();
-		if(cmd == 'W' || cmd == 'w'){
-			if(line > 1){
-				gotoxy(20 , line);
-				putchar(' ');
-				line--;
-				gotoxy(20 , line);
-				putchar('<');
+	putchar('\n');
+	line++;
+	gotoxy(60 , line);
+	for(int i=0;i<strlen(str2);i++){
+		putchar(str2[i]);
+		if(str2[i] == '\n'){
+			line++;
+			gotoxy(60 , line);
+			Sleep(200);
+		}
+		Sleep(100);
+	}
+	putchar('\n');
+	line++;
+	gotoxy(60 , line);
+	for(int i=0;i<strlen(str3);i++){
+		putchar(str3[i]);
+		Sleep(100);
+	}
+	line++;
+	gotoxy(60 , line);
+	printf("Health:%d\n" , player.health);
+	line++;
+	gotoxy(60 , line);
+	printf("Strength:%d\n" , player.weapon_val);
+	line++;
+	gotoxy(60 , line);
+	printf("Armor:%d\n" , player.defence);
+	line++;
+	gotoxy(60 , line);
+	printf("Level:%d\n" , find_lv(player.lv));
+	line++;
+	gotoxy(60 , line);
+	printf("EXP:%d\n" , player.lv);
+	line++;
+	gotoxy(60 , line);
+	printf("Total monster you have killed:%d\n" , total_monster_kill);
+	int i;
+	char Alapbet = 'A';
+	line++;
+	gotoxy(60 , line);
+	for(i=0;i<13;i++){
+		printf("%c:%d   " , Alapbet , alp[i]);
+		Alapbet++;
+	}
+	line++;
+	gotoxy(60 , line);
+	for(i=13;i<26;i++){
+		printf("%c:%d   " , Alapbet , alp[i]);
+		Alapbet++;
+	}
+	line++;
+	gotoxy(60 , line);
+	for(int i=0;i<type_of_core;i++){
+		printf("%s:%d" , ore_code[i + 1] , ore_inventory[i + 1]);
+		line++;
+		gotoxy(60 , line);
+	}
+	line++;
+	gotoxy(60 , line);
+	for(int i=0;i<strlen(str4);i++){
+		putchar(str4[i]);
+		Sleep(100);
+	}
+	getch();
+	cls;
+}
+
+void trading(PLAYER player){
+	while(1){
+		cls;
+		char input;
+		printf("Please typing what alphabet you want to trade Or press ESC to leave:");
+		scanf(" %c" , &input);
+		if(input == ESC){
+			break;
+		}
+		input = tolower(input);
+		if('a' < input && input <= 'z'){
+			cls;
+			int in;
+			printf("How many you want to trade:");
+			scanf("%d" , &in);
+			if(alp[input - 'a' - 1] >= 10 * in){
+				alp[input - 'a' - 1] -= 10 * in;
+				alp[input - 'a' ]+=in;
+				printf("Done");
+				Sleep(500);
+				if(alp[25] >= 10){
+					ENDING(player);
+					alp[25]-=10;
+					return;
+				}
+			}
+			else{
+				printf("You don't have enough alphabet..");
+				Sleep(500);
 			}
 		}
-		else if(cmd == 's' || cmd == 'S'){
-			if(line < max_line){
-				gotoxy(20 , line);
-				putchar(' ');
-				line++;
-				gotoxy(20 , line);
-				putchar('<');
-			}
-		}
-		else if(cmd == '\r'){
-			if(line == 1){
-				cls;
-				char input;
-				printf("Please typing what alphabet you want to trade:");
-				scanf(" %c" , &input);
-				input = tolower(input);
-				if('a' <= input && input < 'z'){
-					cls;
-					int in;
-					printf("How many you want to trade:");
-					scanf("%d" , &in);
-					if(alp[input - 'a' - 1] >= 100 * in){
-						alp[input - 'a' - 1] -= 100 * in;
-						alp[input - 'a' ]+=in;
-					}
-					else{
-						printf("You don't have enough alphabet..");
-						Sleep(500);
-					}
-				}
-				else if(input == ESC){
-					break;
-				}
-				else{
-					cls;
-					printf("Out of bound..");
-					Sleep(500);
-				}
-			}
-			print_lines();
-		}
-	}while(cmd != ESC);
+	}
 	cls;
 	printf("Bye..");
 	Sleep(500);
+	
 	return;
 }
 
@@ -1380,7 +1648,6 @@ void mission(PLAYER player){
 		pre_choice = choice;
 		pre_line = line;
 		if(cmd == 'a'){
-			
 			choice = 1;
 		}
 		else if(cmd == 'd'){
@@ -1667,12 +1934,20 @@ int main(){
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
 	
-	
-	if(fopen("cheatison.txt" , "r")){
-		int a = new_mining();
-		cls;
-		printf("%d" , a);
-		return 0;
+	if(access( "cheatison.txt", F_OK ) != -1 ){
+		FILE *fp = fopen("cheatison.txt" , "r");
+		int a;
+		fscanf(fp , "%d" , &a);
+		fclose(fp);
+		if(a == 1){
+			mode = 3;
+			PLAYER player;
+			player.defence = 10;
+			player.weapon_val = 100;
+			player.health = 100;
+			getinto_event(player);
+			return 0;
+		}
 	}
 	
 	while(!login_class()){
@@ -1724,7 +1999,7 @@ int main(){
 			}
 			else if(play_map[player.y - 1][player.x] == 'A'){
 				cls;
-				trading();
+				trading(player);
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y - 1][player.x] == '.'){
@@ -1788,7 +2063,7 @@ int main(){
 			}
 			else if(play_map[player.y + 1][player.x] == 'A'){
 				cls;
-				trading();
+				trading(player);
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y + 1][player.x] == '.'){
@@ -1852,7 +2127,7 @@ int main(){
 			}
 			else if(play_map[player.y][player.x - 1] == 'A'){
 				cls;
-				trading();
+				trading(player);
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x - 1] == '.'){
@@ -1918,7 +2193,7 @@ int main(){
 			}
 			else if(play_map[player.y][player.x + 1] == 'A'){
 				cls;
-				trading();
+				trading(player);
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x + 1] == '.'){
@@ -1997,11 +2272,10 @@ int main(){
 			int k = 0;
 			cls;
 			if(!check_admin(player_ac)){
-				printf("\t\tYou don't have premission!!");
-				Sleep(1000);
+				command_promte_user(&player);
 			}
 			else{
-				command_promte(&player);
+				command_promte_admin(&player);
 			}
 			cls;
 			map_runner(map_information , player);
@@ -2032,9 +2306,9 @@ int main(){
 		}
 		if(move_cmd == 's' || move_cmd == 'S' || move_cmd == 'W' || move_cmd == 'w' || move_cmd == 'A' || move_cmd == 'a' || move_cmd == 'd' || move_cmd == 'D'){
 			if(random >= random_chance && mode == 3 && !first_into_map){
-				cls;
+				/*cls;
 				printf("getting into event %d\n" , mode);
-				Sleep(500);
+				Sleep(500);*/
 				cls;
 				/*printf("%d" , mode);
 				pause;*/
