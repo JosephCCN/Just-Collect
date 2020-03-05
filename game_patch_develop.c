@@ -103,6 +103,7 @@ int alp[26]; //the alpabet
 char player_ac[1000];
 int map_lower_x , map_lower_y;
 int mode = 1;
+float time_taken_in_1e4 = 1.0;
 
 void string_input(char str[] , int max_len , bool hide){
 	memset(str , '\0' , sizeof(str)/sizeof(char));
@@ -189,14 +190,14 @@ void admin_page(){
 				fp = fopen(name , "r");
 				char password[10005];
 				fscanf(fp , "%s\n" , password);
-				if(string_cmp(password , "ADMIN")){
+				if(string_cmp(decrypt_str(password) , "ADMIN")){
 					fscanf(fp , "%s\n" , password);
 				}
 				fclose(fp);
 				for(int i=0;i<30 - strlen(name) - strlen(password);i++){
 					putchar('.');
 				}
-				puts(password);
+				puts(decrypt_str(password));
 			} 
 			fclose(file);
 			pause;
@@ -221,28 +222,39 @@ void admin_page(){
 			printf("Player %s:\n" , tmp);
 			char password[1005];
 			fscanf(fp , "%s\n" , password);
-			if(string_cmp(password , "ADMIN")){
+			if(string_cmp(decrypt_str(password) , "ADMIN")){
 				fscanf(fp , "%s\n" , password);
-				printf("Password: %s\n" , password);
+				printf("Password: %s\n" , decrypt_str(password) );
 				puts("Account Identity: Admin");
 			}
 			else{
-				printf("Password: %s\n" , password);
+				printf("Password: %s\n" , decrypt_str(password) );
 				puts("Account Identity: Player");
 			}
 			
 			int k;
-			fscanf(fp , "%d\n" , &k);
+			fscanf(fp , "%s\n" , tmp);
+			k = decrypt_int(tmp);
 			printf("Exp:%d   Lv.:%d\n" , k , find_lv(k));
 			puts("Alphabet:");
 			for(int i=0;i<26;i++){
 				int num;
-				fscanf(fp , "%d\n" , &num);
+				fscanf(fp , "%s\n" , tmp);
+				num = decrypt_int(tmp);
 				printf("%c...%d\n" , 'A' + i,num);
 			}
 			int a , b , c , d  ,e;
 			puts("Hunting part:");
-			fscanf(fp , "%d\n%d\n%d\n%d" , &a , &b , &c , &d);
+			fscanf(fp , "%s" , tmp);
+			a = decrypt_int(tmp);
+			fscanf(fp , "%s" , tmp);
+			b = decrypt_int(tmp);
+			fscanf(fp , "%s" , tmp);
+			c = decrypt_int(tmp);
+			fscanf(fp , "%s" , tmp);
+			d = decrypt_int(tmp);
+			fscanf(fp , "%s" , tmp);
+			e = decrypt_int(tmp);
 			printf("Attack Power:%d Armor:%d Health:%d\nTotal Monster killed:%d\n" , a , b , c , d);
 			fclose(fp);
 			puts("Mining Part:");
@@ -250,18 +262,24 @@ void admin_page(){
 			fp = fopen(tmp , "r");
 			for(int i=0;i<type_of_core;i++){
 				int k;
-				fscanf(fp , "%d\n" , &k);
-				printf("%s\t%d\n" , ore_code[i+1] , k);
+				fscanf(fp , "%s\n" , tmp);
+				printf("%s\t%d\n" , ore_code[i+1] , decrypt_int(tmp));
 			}
-			fscanf(fp , "%d %d\n%d" , &a , &b , &c);
-			fscanf(fp , "%d" , &k);
+			for(int i=0;i<3;i++){
+				fscanf(fp , "%s" , tmp);
+			}
+			fscanf(fp , "%s" , tmp);
+			k = decrypt_int(tmp);
 			printf("Attack: %d\n" , k);
-			fscanf(fp , "%d" , &k);
+			fscanf(fp , "%s" , tmp);
+			k = decrypt_int(tmp);
 			printf("Health: %d\n" , k);
-			fscanf(fp , "%d" , &k);
+			fscanf(fp , "%s" , tmp);
+			k = decrypt_int(tmp);
 			printf("Armor: %d\n" , k);
-			fscanf(fp , "%d" , &k);
-			printf("Quantity: %d\n" , k);
+			fscanf(fp , "%s" , tmp);
+			k = decrypt_int(tmp);
+			printf("Reward: %d\n" , k);
 			fclose(fp);
 			
 			puts("Settings:");
@@ -341,12 +359,12 @@ void admin_page(){
 					i++;
 				}
 				fclose(fp);
-				if(string_cmp(tmp[0] , "ADMIN")){
+				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
 					printf("Already admin!!");
 				}
 				else{
 					fp = fopen(file_name , "w");
-					fprintf(fp , "ADMIN\n");
+					fprintf(fp , "%s\n" , encrypt_str("ADMIN"));
 					for(int j=0;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
@@ -382,7 +400,7 @@ void admin_page(){
 					i++;
 				}
 				fclose(fp);
-				if(string_cmp(tmp[0] , "ADMIN")){
+				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
 					fp = fopen(filename , "w");
 					for(int j = 1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
@@ -428,6 +446,7 @@ bool string_cmp(char s1[] , char s2[]){
 	}
 	for(i=0;i<len;i++){
 		if(s1[i] != s2[i]){
+			
 			return false;
 		}
 	}
@@ -443,6 +462,7 @@ bool string_cmp(char s1[] , char s2[]){
 		int l = l2;
 		for(;i<l;i++){
 			if(s2[i] != ' ' && s2[i] != '\0' && s2[i] != '\n'){
+				//printf("%c" , s2[i]);
 				return false;
 			}
 		}
@@ -474,11 +494,11 @@ void register_f(){
 	FILE * file = fopen(file_name , "w");
 	printf("please enter your password(only record the first 100 characters):\n");
 	string_input(password , 100 , false);
-	fprintf(file , "%s\n0\n" , password);
+	fprintf(file , "%s\n%s\n" , encrypt_str(password) , encrypt_int(0));
 	for(i=0;i<26;i++){
-		fprintf(file,"0\n");
+		fprintf(file,"%s\n" , encrypt_int(0));
 	}
-	fprintf(file , "10\n10\n100\n0\n0"); //AD defence health total_monster_kill monster_counting
+	fprintf(file , "%s\n%s\n%s\n%s\n%s" , encrypt_int(10) , encrypt_int(10) , encrypt_int(100) , encrypt_int(0) , encrypt_int(0)); //AD defence health total_monster_kill monster_counting
 	fclose(file);
 	printf("Done\n");
 	Sleep(500);
@@ -486,9 +506,9 @@ void register_f(){
 	sprintf(filename2 , "%s_2.txt" , user_name);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
-		fprintf(file , "%d " , ore_inventory[i + 1]);
+		fprintf(file , "%s\n" , encrypt_int(ore_inventory[i + 1]));
 	}
-	fprintf(file , "\n1 1\n10\n0 0 0 0"); //the first 3 numbers are for mission sys , the next 4 is for skill point
+	fprintf(file , "%s\n%s\n%s\n%s\n%s\n%s\n%s" , encrypt_int(1) , encrypt_int(1) , encrypt_int(10) , encrypt_int(0) , encrypt_int(0) , encrypt_int(0) , encrypt_int(0)); //the first 3 numbers are for mission sys , the next 4 is for skill point
 	fclose(file);
 	FILE *fp;
 	fp = fopen("player_list.txt" , "a");
@@ -531,16 +551,23 @@ bool login(){
 	char comfirm_password[105];
 	fgets(comfirm_password , 100 , file);
 	
-	if(string_cmp(comfirm_password , "ADMIN")){
+	if(string_cmp(decrypt_str(comfirm_password) , "ADMIN")){
 		fgets(comfirm_password , 100 , file);
+		decrypt_str(comfirm_password);
 		admin_checked = true;
 	}
 	
-	
+	//printf("%s %s\n" , password , comfirm_password);
+	/*for(int i=0;i<2;i++){
+		if(password[i] != comfirm_password[i]){
+			printf("%d" , i);
+		}
+	}*/
 	if(!string_cmp(password , comfirm_password)){
 		admin_checked = false;
 		printf("Wrong password!!\n");
 		Sleep(500);
+		pause;
 		return false;
 	}
 	
@@ -548,24 +575,46 @@ bool login(){
 	
 	printf("Login success!!\n");
 	strcpy(player_ac , user_name);
+	char tmp[2005] = {0,};
 	/*printf("%s" , player_ac);
 	pause;*/
 	fscanf(file , "\n");
-	fscanf(file , "%d\n" , &coop.lv);
+	fscanf(file , "%s\n" , tmp);
+	coop.lv = decrypt_int(tmp);
 	for(i=0;i<26;i++){
-		fscanf(file , "%d" , &alp[i]);
+		fscanf(file , "%s" , tmp);
+		alp[i] = decrypt_int(tmp);
 	}
-	fscanf(file , "\n%d\n%d\n%d\n%d\n%d" , &coop.weapon_val , &coop.defence , &coop.health , &total_monster_kill , &monster_counting);
+	fscanf(file , "\n%s" , &tmp);
+	coop.weapon_val = decrypt_int(tmp);
+	fscanf(file , "\n%s" , &tmp);
+	coop.defence = decrypt_int(tmp);
+	fscanf(file , "\n%s" , &tmp);
+	coop.health = decrypt_int(tmp);
+	fscanf(file , "\n%s" , &tmp);
+	total_monster_kill = decrypt_int(tmp);
+	fscanf(file , "\n%s" , &tmp);
+	monster_counting = decrypt_int(tmp);
 	fclose(file);
+	
+	
 	char filename2[1000];
 	sprintf(filename2 , "%s_2.txt" , user_name);
 	file = fopen(filename2 , "r");
 	for(int i=0;i<type_of_core;i++){
-		fscanf(file , "%d" , &ore_inventory[i + 1]);
+		fscanf(file , "%s" , tmp);
+		ore_inventory[i + 1] = decrypt_int(tmp);
 	}
 	int a;
-	for(int i=0;i<3;i++) fscanf(file , "%d" , &a);
-	fscanf(file , "%d %d %d %d" , &skillpoint[1] , &skillpoint[2] , &skillpoint[3] , &skillpoint[4]);
+	for(int i=0;i<3;i++) fscanf(file , "%s" , tmp);
+	fscanf(file , "%s" , tmp);
+	skillpoint[1] = decrypt_int(tmp);
+	fscanf(file , "%s" , tmp);
+	skillpoint[2] = decrypt_int(tmp);
+	fscanf(file , "%s" , tmp);
+	skillpoint[3] = decrypt_int(tmp);
+	fscanf(file , "%s" , tmp);
+	skillpoint[4] = decrypt_int(tmp);
 	fclose(file);
 	Sleep(500);
 	
@@ -615,16 +664,6 @@ bool login_class(){
 			if(selector == 1){
 				selector = 2;
 			}
-		}
-		else if(cmd == 'l'){
-			strcpy(player_ac , "test");
-			for(i=0;i<26;i++){
-				alp[i] = 0;
-			}
-			coop.weapon_val = 10;
-			coop.health = 100;
-			coop.lv = 100;
-			return true;
 		}
 	}while(cmd!='\r');
 	cls;
@@ -768,30 +807,32 @@ void updater(PLAYER player){
 	fclose(file);
 	file = fopen(file_name , "w");
 	if(admin_checked){
-		fprintf(file , "ADMIN\n");
+		fprintf(file , "%s\n" , encrypt_str("ADMIN"));
 	}
-	fprintf(file , "%s%d\n" , password , player.lv);
+	fprintf(file , "%s%s\n" , password , encrypt_int(player.lv));
 	for(i=0;i<26;i++){
-		fprintf(file , "%d\n" , alp[i]);
+		fprintf(file , "%s\n" , encrypt_int(alp[i]));
 	}
-	fprintf(file , "%d\n%d\n%d\n%d\n%d" , player.weapon_val , player.defence , player.health , total_monster_kill , monster_counting);
+	fprintf(file , "%s\n%s\n%s\n%s\n%s" , encrypt_int(player.weapon_val) , encrypt_int(player.defence) , encrypt_int(player.health) , encrypt_int(total_monster_kill) , encrypt_int(monster_counting));
 	fclose(file);
 	char filename2[1000];
 	sprintf(filename2 , "%s_2.txt" , player_ac);
 	file = fopen(filename2 , "r");
 	for(int i=0;i<type_of_core;i++){
-		int a;
-		fscanf(file , "%d" , &a);
+		char a[1005];
+		fscanf(file , "%s" , a);
 	}
-	int a , b , c;
-	fscanf(file , "%d %d\n%d" , &a , &b , &c);
+	char a[1005];
+	char b[1005];
+	char c[1005];
+	fscanf(file , "%s%s%s" , a , b , c);
 	fclose(file);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
-		fprintf(file , "%d " , ore_inventory[i + 1]);
+		fprintf(file , "%d\n" , encrypt_int(ore_inventory[i + 1]));
 	}
-	fprintf(file , "\n%d %d\n%d\n" , a , b , c);
-	for(int i=1;i<=4;i++) fprintf(file , "%d " , skillpoint[i]);
+	fprintf(file , "%s\n%s\n%s\n" , a , b , c);
+	for(int i=1;i<=4;i++) fprintf(file , "%d\n" , encrypt_int(skillpoint[i]));
 	fclose(file);
 	
 	char str[1000];
@@ -1115,8 +1156,9 @@ CI new_combat_2(){
 	}
 	//start play
 	int x = 65 , y = 7;
+	float dur = 0.4;
 	int count = 0;
-	int count_y_plus = 1e4;
+	int count_y_plus = dur/time_taken_in_1e4 * 1e4;
 	CI re;
 	re.hurt = false;
 	gotoxy(x , y);
@@ -1126,7 +1168,7 @@ CI new_combat_2(){
 	while(y < 11){
 		count++;
 		//pause;
-		if(count >= 1e8){
+		if(count >= count_y_plus * 1e4){
 			count = 0;
 			gotoxy(x , y);
 			putchar(' ');
@@ -1582,9 +1624,9 @@ void trading(PLAYER player){
 	while(1){
 		cls;
 		char input;
-		printf("Please typing what alphabet you want to trade Or press ESC to leave:");
+		printf("Please typing what alphabet you want to trade Or type 1 to leave:");
 		scanf(" %c" , &input);
-		if(input == ESC){
+		if(input == '1'){
 			break;
 		}
 		input = tolower(input);
@@ -1624,14 +1666,19 @@ void mission(PLAYER player){
 	strcat(filename , "_2.txt");
 	fp = fopen(filename , "r");
 	for(int i=0;i<type_of_core;i++){
-		int a;
-		fscanf(fp , "%d" , &a);
+		int a[1005];
+		fscanf(fp , "%s" , a);
 	}
 	int quantity , input_ore_code;
 	int has_kill , need_to_kill;
 	char cmd;
-	fscanf(fp , "%d %d\n" , &quantity , &input_ore_code);
-	fscanf(fp , "%d" , &need_to_kill);
+	char tmp[1005];
+	fscanf(fp , "%s" , tmp);
+	quantity = decrypt_int(tmp);
+	fscanf(fp , "%s" , tmp);
+	input_ore_code = decrypt_int(tmp);
+	fscanf(fp , "%s" , tmp);
+	need_to_kill = decrypt_int(tmp);
 	fclose(fp);
 	printf("Press ESC to exit mission system , Use A or D to select Yes or No , Press W and S to choose misssion , Press enter to comfirm selection\n");
 	printf("You are required to submit %d %s , Process:%d/%d\n" , quantity , ore_code[input_ore_code] , ore_inventory[input_ore_code] , quantity);
@@ -1934,6 +1981,16 @@ int main(){
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
 	
+	int count = 0;
+	clock_t start = clock();
+	while(count <= 1e4){
+		if(kbhit()){
+			
+		}
+		count++;
+	}
+	float g = (float)(clock() - start);
+	time_taken_in_1e4 = (g/CLOCKS_PER_SEC);
 	if(access( "cheatison.txt", F_OK ) != -1 ){
 		FILE *fp = fopen("cheatison.txt" , "r");
 		int a;
@@ -1953,7 +2010,6 @@ int main(){
 	while(!login_class()){
 		cls;
 	}
-	
 	
 	color(text_color);
 	
