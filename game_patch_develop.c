@@ -104,7 +104,7 @@ int alp[26]; //the alpabet
 char player_ac[1000];
 int map_lower_x , map_lower_y;
 int mode = 1;
-float time_taken_in_1e4 = 1.0;
+bool cheatison = false;
 
 void string_input(char *str , int max_len , bool hide){
 	memset(str , '\0' , max_len);
@@ -1122,7 +1122,7 @@ void command_promte_user(PLAYER *player){
 	}while(!string_cmp(cmd , "exit"));
 }
 
-CI new_combat_2(){
+CI new_combat_2(PLAYER player){
 	
 	int combat_map[100][100] = {0,};
 	int path_x = 65, path_y = 11;
@@ -1202,13 +1202,15 @@ CI new_combat_2(){
 		gotoxy(67 , i);
 		putchar(boundary_skin);
 	}
-	gotoxy(63 , 10);
-	for(int i=0;i<5;i++){
+	gotoxy(64 , 10);
+	for(int i=0;i<3;i++){
 		putchar(' ');
 	}
 	//start play
 	int x = 65 , y = 7;
-	double dur = 0.3;
+	double dur = find_lv(player.lv) * -0.0075 + 0.35;
+	if(!cheatison) dur = max(0.2 , dur);
+	else dur = max(0.15 , dur);
 	CI re;
 	re.hurt = false;
 	gotoxy(x , y);
@@ -1524,7 +1526,7 @@ bool getinto_event(PLAYER player){
 		cls;
 		while(monster_health > 0 && player.health > 0){
 			CI k;
-			k = new_combat_2();
+			k = new_combat_2(player);
 			int damage = 0;
 			bool crit = false;
 			if(k.hurt){
@@ -2054,11 +2056,13 @@ int main(){
 		fscanf(fp , "%d" , &a);
 		fclose(fp);
 		if(a == 1){
+			cheatison = true;
 			mode = 3;
 			PLAYER player;
 			player.defence = 10;
 			player.weapon_val = 100;
 			player.health = 100;
+			player.lv = 100000;
 			getinto_event(player);
 			return 0;
 		}
