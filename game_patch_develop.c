@@ -95,6 +95,7 @@ int text_color;
 char narrow;
 char up , down , left , right;
 bool admin_checked = false;
+bool master_comfirm = false;
 bool string_cmp(char* , char* );
 
 /*******struct part end***************/
@@ -105,10 +106,11 @@ int map_lower_x , map_lower_y;
 int mode = 1;
 float time_taken_in_1e4 = 1.0;
 
-void string_input(char str[] , int max_len , bool hide){
-	memset(str , '\0' , sizeof(str)/sizeof(char));
+void string_input(char *str , int max_len , bool hide){
+	memset(str , '\0' , max_len);
 	int pt = 0;
 	while(1){
+		//puts(str);
 		char ch = getch();
 		if(ch == ESC){
 			strcpy(str , "GoToHomePage_Code:100");
@@ -132,6 +134,9 @@ void string_input(char str[] , int max_len , bool hide){
 			else putchar(ch);
 		}
 	}
+	/*for(int i=0;i<pt;i++){
+		re[i] = str[i];
+	}*/
 }
 
 int find_lv(int v){
@@ -190,7 +195,7 @@ void admin_page(){
 				fp = fopen(name , "r");
 				char password[10005];
 				fscanf(fp , "%s\n" , password);
-				if(string_cmp(decrypt_str(password) , "ADMIN")){
+				if(string_cmp(decrypt_str(password) , "ADMIN") || string_cmp(decrypt_str(password) , "MASTER")){
 					fscanf(fp , "%s\n" , password);
 				}
 				fclose(fp);
@@ -226,6 +231,11 @@ void admin_page(){
 				fscanf(fp , "%s\n" , password);
 				printf("Password: %s\n" , decrypt_str(password) );
 				puts("Account Identity: Admin");
+			}
+			else if(string_cmp(decrypt_str(password) , "MASTER")){
+				fscanf(fp , "%s\n" , password);
+				printf("Password: %s\n" , decrypt_str(password) );
+				puts("Account Identity: Master");
 			}
 			else{
 				printf("Password: %s\n" , decrypt_str(password) );
@@ -336,6 +346,12 @@ void admin_page(){
 		}
 		else if(choose == 4){
 			cls;
+			if(!master_comfirm){
+				printf("You have no permission to updrage user to admin");
+				Sleep(1000);
+				cls;
+				continue;
+			}
 			printf("Please input user name:");
 			char name[1000];
 			char file_name[1000];
@@ -360,12 +376,21 @@ void admin_page(){
 				}
 				fclose(fp);
 				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
-					printf("Already admin!!");
+					fp = fopen(file_name , "w");
+					fprintf(fp , "%s\n" , encrypt_str("MASTER"));
+					for(int j=0;j<i;j++){
+						fprintf(fp , "%s\n" , tmp[j]);
+					}
+					fclose(fp);
+					printf("Done");
+				}
+				else if(string_cmp(decrypt_str(tmp[0]) , "MASTER")){
+					printf("This user is the Master.");
 				}
 				else{
 					fp = fopen(file_name , "w");
 					fprintf(fp , "%s\n" , encrypt_str("ADMIN"));
-					for(int j=0;j<i;j++){
+					for(int j=1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
 					fclose(fp);
@@ -377,6 +402,12 @@ void admin_page(){
 		}
 		else if(choose == 5){
 			cls;
+			if(!master_comfirm){
+				printf("You have no permission to degrade user to admin");
+				Sleep(1000);
+				cls;
+				continue;
+			}
 			char str[1000];
 			printf("Please input admin account:");
 			string_input(str , 100 , false);
@@ -402,6 +433,16 @@ void admin_page(){
 				fclose(fp);
 				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
 					fp = fopen(filename , "w");
+					for(int j = 1;j<i;j++){
+						fprintf(fp , "%s\n" , tmp[j]);
+					}
+					fclose(fp);
+					printf("Done");
+					Sleep(1000);
+				}
+				else if(string_cmp(decrypt_str(tmp[0]) , "MASTER")){
+					fp = fopen(filename , "w");
+					fprintf(fp , "%s\n" , encrypt_str("ADMIN"));
 					for(int j = 1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
@@ -483,6 +524,9 @@ void register_f(){
 	
 	printf("please enter you user name(only record the first 100 characters):\n");
 	string_input(user_name , 100 , false);
+	if(string_cmp(user_name , "GoToHomePage_Code:100")){
+		return;
+	}
 	sprintf(file_name , "%s.txt" , user_name);
 	
 	if(access( file_name, F_OK ) != -1 ){
@@ -494,6 +538,10 @@ void register_f(){
 	FILE * file = fopen(file_name , "w");
 	printf("please enter your password(only record the first 100 characters):\n");
 	string_input(password , 100 , false);
+	//printf("%s" , password);
+	if(string_cmp(password , "GoToHomePage_Code:100")){
+		return;
+	}
 	fprintf(file , "%s\n%s\n" , encrypt_str(password) , encrypt_int(0));
 	for(i=0;i<26;i++){
 		fprintf(file,"%s\n" , encrypt_int(0));
@@ -506,7 +554,7 @@ void register_f(){
 	sprintf(filename2 , "%s_2.txt" , user_name);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
-		fprintf(file , "%s\n" , encrypt_int(ore_inventory[i + 1]));
+		fprintf(file , "%s\n" , encrypt_int(0));
 	}
 	fprintf(file , "%s\n%s\n%s\n%s\n%s\n%s\n%s" , encrypt_int(1) , encrypt_int(1) , encrypt_int(10) , encrypt_int(0) , encrypt_int(0) , encrypt_int(0) , encrypt_int(0)); //the first 3 numbers are for mission sys , the next 4 is for skill point
 	fclose(file);
@@ -556,7 +604,12 @@ bool login(){
 		decrypt_str(comfirm_password);
 		admin_checked = true;
 	}
-	
+	else if(string_cmp(decrypt_str(comfirm_password) , "MASTER")){
+		admin_checked = true;
+		master_comfirm = true;
+		fgets(comfirm_password , 100 , file);
+		decrypt_str(comfirm_password);
+	}
 	//printf("%s %s\n" , password , comfirm_password);
 	/*for(int i=0;i<2;i++){
 		if(password[i] != comfirm_password[i]){
@@ -567,7 +620,6 @@ bool login(){
 		admin_checked = false;
 		printf("Wrong password!!\n");
 		Sleep(500);
-		pause;
 		return false;
 	}
 	
@@ -829,10 +881,10 @@ void updater(PLAYER player){
 	fclose(file);
 	file = fopen(filename2 , "w");
 	for(int i=0;i<type_of_core;i++){
-		fprintf(file , "%d\n" , encrypt_int(ore_inventory[i + 1]));
+		fprintf(file , "%s\n" , encrypt_int(ore_inventory[i + 1]));
 	}
 	fprintf(file , "%s\n%s\n%s\n" , a , b , c);
-	for(int i=1;i<=4;i++) fprintf(file , "%d\n" , encrypt_int(skillpoint[i]));
+	for(int i=1;i<=4;i++) fprintf(file , "%s\n" , encrypt_int(skillpoint[i]));
 	fclose(file);
 	
 	char str[1000];
@@ -1156,20 +1208,18 @@ CI new_combat_2(){
 	}
 	//start play
 	int x = 65 , y = 7;
-	float dur = 0.4;
-	int count = 0;
-	int count_y_plus = dur/time_taken_in_1e4 * 1e4;
+	double dur = 0.3;
 	CI re;
 	re.hurt = false;
 	gotoxy(x , y);
 	putchar(main_character);
-	//pause;
 	int line_report = 0;
+	struct timeval interval , end;
+	gettimeofday(&interval , NULL);
 	while(y < 11){
-		count++;
-		//pause;
-		if(count >= count_y_plus * 1e4){
-			count = 0;
+		gettimeofday(&end , NULL);
+		if(((end.tv_sec - interval.tv_sec) * 1e6 + end.tv_usec - interval.tv_usec) * 1e-6 >= dur){
+			interval = end;
 			gotoxy(x , y);
 			putchar(' ');
 			y++;
@@ -1177,12 +1227,14 @@ CI new_combat_2(){
 			putchar(main_character);
 		}
 	}
+	
+	gettimeofday(&interval , NULL);
 	while(y < 39){
-		count++;
+		//count++;
 		if(combat_map[x][y] == 0){
-			gotoxy(0 , line_report);
-			printf("%d %d" , x , y);
-			line_report++;
+			//gotoxy(0 , line_report);
+			//printf("%d %d" , x , y);
+			//line_report++;
 			re.hurt = true;
 			break;
 		}
@@ -1204,8 +1256,9 @@ CI new_combat_2(){
 				putchar(main_character);
 			}
 		}	
-		if(count >= count_y_plus){
-			count = 0;
+		gettimeofday(&end , NULL);
+		if(((end.tv_sec - interval.tv_sec) * 1e6 + end.tv_usec - interval.tv_usec) * 1e-6 >= dur){
+			interval = end;
 			gotoxy(x , y);
 			putchar(' ');
 			y++;
@@ -1452,7 +1505,7 @@ bool getinto_event(PLAYER player){
 		Sleep(100);
 		cls;
 		int max_str_length = 5;  //max generate string length
-		int max_damage = player.health * 0.5; //max damage monster can hit
+		int max_damage = player.health * 0.5 + player.defence; //max damage monster can hit
 		int i , j;
 		int monster_health = rand()%player.weapon_val * 3 + player.weapon_val * 2;
 		
@@ -1475,7 +1528,10 @@ bool getinto_event(PLAYER player){
 			int damage = 0;
 			bool crit = false;
 			if(k.hurt){
-				damage = (rand()%max_damage + 1) - player.defence;
+				damage = (rand()%max_damage + 1);
+				//printf("%d\n" , damage);
+				//pause;
+				damage-= player.defence;
 				damage = max(0 , damage);
 				player.health -= damage;
 			}
@@ -1981,7 +2037,7 @@ int main(){
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
 	
-	int count = 0;
+	/*int count = 0;
 	clock_t start = clock();
 	while(count <= 1e4){
 		if(kbhit()){
@@ -1990,7 +2046,8 @@ int main(){
 		count++;
 	}
 	float g = (float)(clock() - start);
-	time_taken_in_1e4 = (g/CLOCKS_PER_SEC);
+	time_taken_in_1e4 = (g/CLOCKS_PER_SEC);*/
+	
 	if(access( "cheatison.txt", F_OK ) != -1 ){
 		FILE *fp = fopen("cheatison.txt" , "r");
 		int a;
