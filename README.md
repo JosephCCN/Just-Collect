@@ -16,7 +16,7 @@ Encryption is added to game
  # New Feature
  Ending is added to game
  # Balance
- Trading rate decrease to 10
+ Trading rate decreased to 10
  # Debug 
  Cannot save data correctly after using updater  
  Cannot save data correctly after finish a mission  
