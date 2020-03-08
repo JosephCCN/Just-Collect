@@ -10,6 +10,7 @@ Mining system rework is done
 # Patch Beta 4.0
 New combat system is done  
 Critical Damage is added to game  
+Crit Chance is Reward Skillpoints<sub>10<sub>log4/100</sub></sub>
 Encryption is added to game
 
 # Patch OV 1.0
