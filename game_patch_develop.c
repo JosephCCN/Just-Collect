@@ -127,7 +127,7 @@ void string_input(char *str , int max_len , bool hide){
 			pt--;
 			printf("\b \b");
 		}
-		else if(max_len > pt){
+		else if(ch != '\b' && ch != '\n' && ch != '\r' && max_len > pt){
 			str[pt] = ch;
 			pt++;
 			if(hide) putchar('*');
@@ -1382,7 +1382,7 @@ CI new_combat(){
 }
 
 
-int new_mining(){
+int new_mining(PLAYER player){
 	
 	
 	
@@ -1419,20 +1419,21 @@ int new_mining(){
 			t_y+=(30/t);
 			
 		}
-		
+		double dur;
+		if(!cheatison) dur = 0.2;
+		else dur = max(0.1 , find_lv(player.lv) * -0.0075 + 0.2);
 		gotoxy(60 , 6);
-		printf("Round: %d" , i + 1);
-		int dur = 7000;
-		int tm = 0;
+		printf("Round: %d  Speed: %lf" , i + 1 , dur);
+		struct timeval st , end;
 		gotoxy(x , y);
 		putchar('&');
+		gettimeofday(&st , NULL);
 		while(y < 39){
 			if(mm[y][x] == 1){
 				sum++;
 				mm[y][x] = 0;
 			}
 			if(kbhit()){
-				tm-=1000;
 				int prev = x;
 				char c = getch();
 				c = tolower(c);
@@ -1445,23 +1446,53 @@ int new_mining(){
 				if(prev != x){
 					gotoxy(prev , y);
 					putchar(' ');
-					if(tm >= dur){
-						tm = 0;
-						y++;
-					}
 					gotoxy(x , y);
 					putchar('&'); 
 				}
 			}
-			else if(tm >= dur){
-				gotoxy(x , y);
-				putchar(' ');
-				y++;
-				gotoxy(x , y);
-				putchar('&'); 
-				tm = 0;
+			if(kbhit() && cheatison){
+				int prev = x;
+				char c = getch();
+				c = tolower(c);
+				if(c == 'a' && x > 51){
+					x--;
+				}
+				else if(c == 'd' && x < 79){
+					x++;
+				}
+				if(prev != x){
+					gotoxy(prev , y);
+					putchar(' ');
+					gotoxy(x , y);
+					putchar('&'); 
+				}
 			}
-			tm++;
+			if(kbhit() && cheatison){
+				int prev = x;
+				char c = getch();
+				c = tolower(c);
+				if(c == 'a' && x > 51){
+					x--;
+				}
+				else if(c == 'd' && x < 79){
+					x++;
+				}
+				if(prev != x){
+					gotoxy(prev , y);
+					putchar(' ');
+					gotoxy(x , y);
+					putchar('&'); 
+				}
+			}
+			gettimeofday(&end , NULL);
+			if(((end.tv_sec - st.tv_sec) * 1e6 + end.tv_usec - st.tv_usec) * 1e-6 >= dur){
+					gotoxy(x , y);
+					putchar(' ');
+					y++;
+					gotoxy(x , y);
+					putchar('&'); 
+					st = end;
+			}
 		}
 		gotoxy(x , y);
 		putchar(boundary_skin);
@@ -1480,7 +1511,7 @@ bool getinto_event(PLAYER player){
 	
 	if(mode == 2){  //mining
 		play_map[player.y][player.x] = ' ';
-		int s = new_mining();
+		int s = new_mining(player);
 		int a = rand()%ore_in_each_lv[core_lv_divide[player.y][player.x]];
 		int i;
 		cls;
@@ -1822,9 +1853,9 @@ void mission(PLAYER player){
 		int new_code = rand()%type_of_core + 1;
 		fp = fopen(filename , "w");
 		for(int i=1;i<=type_of_core;i++){
-			fprintf(fp , "%d " , ore_inventory[i]);
+			fprintf(fp , "%s\n" , encrypt_int(ore_inventory[i]));
 		}
-		fprintf(fp , "\n%d %d\n%d" , new_quty , new_code , need_to_kill);
+		fprintf(fp , "\n%s\n%s\n%s" , encrypt_int(new_quty) , encrypt_int(new_code) , encrypt_int(need_to_kill));
 		fclose(fp);
 		cls;
 		alp[0]+=10;
@@ -1838,9 +1869,9 @@ void mission(PLAYER player){
 			FILE * fp;
 			fp = fopen(filename , "w");
 			for(int i=1;i<=type_of_core;i++){
-				fprintf(fp , "%d " , ore_inventory[i]);
+				fprintf(fp , "%s\n" , encrypt_int(ore_inventory[i]));
 			}	
-			fprintf(fp , "\n%d %d\n%d" , quantity , input_ore_code , rand()%10 + 1);
+			fprintf(fp , "\n%s\n%s\n%s" , encrypt_int(quantity) , encrypt_int(input_ore_code ), encrypt_int(rand()%10 + 1));
 			fclose(fp);
 			alp[0]+=10;
 			updater(player);
@@ -2057,14 +2088,14 @@ int main(){
 		fclose(fp);
 		if(a == 1){
 			cheatison = true;
-			mode = 3;
+			/*mode = 3;
 			PLAYER player;
 			player.defence = 10;
 			player.weapon_val = 100;
 			player.health = 100;
 			player.lv = 100000;
 			getinto_event(player);
-			return 0;
+			return 0;*/
 		}
 	}
 	
