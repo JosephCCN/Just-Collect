@@ -10,7 +10,7 @@ Mining system rework is done
 # Patch Beta 4.0
 New combat system is done  
 Critical Damage is added to game  
-Crit Chance is **min**(40% , **Reward Skillpoints**<sup>10<sup>log4/100</sup></sup> * 10 / 100)
+Crit Chance is **min**(40% , **Reward Skillpoints**<sup>10<sup>log4/100</sup></sup> * 0.1)
 Encryption is added to game
 
 # Patch OV 1.0
