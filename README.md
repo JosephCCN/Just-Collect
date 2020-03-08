@@ -13,14 +13,14 @@ Critical Damage is added to game
 Encryption is added to game
 
 # Patch OV 1.0
- # New Feature
+ ## New Feature
  Ending is added to game
- # Balance
+ ## Balance
  Trading rate decreased to 10
- # Debug 
+ ## Debug 
  Cannot save data correctly after using updater  
  Cannot save data correctly after finish a mission  
  Error when input string is more than size 8  
- # Optimization
+ ## Optimization
  Better timer on both Mining system and Combat system  
  
