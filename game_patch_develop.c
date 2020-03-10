@@ -69,6 +69,7 @@ typedef struct{
 	bool hurt;
 } CI;
 
+
 char play_map[1000][1000];
 int core_lv_divide[1000][1000]; //only for map 2 i.e. mining area
 char ore_list[101][100][100] = {
@@ -82,6 +83,7 @@ char ore_list[101][100][100] = {
 
 int ore_in_each_lv[100] = {0 , 2 , 1 , 1}; //remember to change if a new core is added
 char ore_code[100][100] = {"You find a Easter EGG" , "Blue Ore" , "Red Ore" , "IDK Ore" , "il7 Ore"};
+int lv_of_ore[100] = {0 , 1 , 1 , 2 , 3};
 int ore_inventory[100];
 
 PLAYER coop;
@@ -91,6 +93,7 @@ int monster_counting;
 int skillpoint[5];
 char main_character = '@';
 char boundary_skin = '#';
+int player_health;
 int text_color;
 char narrow;
 char up , down , left , right;
@@ -195,10 +198,12 @@ void admin_page(){
 				fp = fopen(name , "r");
 				char password[10005];
 				fscanf(fp , "%s\n" , password);
-				if(string_cmp(decrypt_str(password) , "ADMIN") || string_cmp(decrypt_str(password) , "MASTER")){
+				if(strcmp(password , "GJSOT") == 0 || strcmp(password , "SGYZKX") == 0){
+					//puts("K");
 					fscanf(fp , "%s\n" , password);
 				}
 				fclose(fp);
+				//puts(password);
 				for(int i=0;i<30 - strlen(name) - strlen(password);i++){
 					putchar('.');
 				}
@@ -227,15 +232,15 @@ void admin_page(){
 			printf("Player %s:\n" , tmp);
 			char password[1005];
 			fscanf(fp , "%s\n" , password);
-			if(string_cmp(decrypt_str(password) , "ADMIN")){
+			if(strcmp(password , "GJSOT") == 0){
 				fscanf(fp , "%s\n" , password);
 				printf("Password: %s\n" , decrypt_str(password) );
-				puts("Account Identity: Admin");
+				puts("Account Identity: Operator");
 			}
-			else if(string_cmp(decrypt_str(password) , "MASTER")){
+			else if(strcmp(password , "SGYZKX") == 0){
 				fscanf(fp , "%s\n" , password);
 				printf("Password: %s\n" , decrypt_str(password) );
-				puts("Account Identity: Master");
+				puts("Account Identity: Administrator");
 			}
 			else{
 				printf("Password: %s\n" , decrypt_str(password) );
@@ -375,22 +380,24 @@ void admin_page(){
 					i++;
 				}
 				fclose(fp);
-				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
+				if(strcmp(tmp[0] , "GJSOT") == 0){
 					fp = fopen(file_name , "w");
-					fprintf(fp , "%s\n" , encrypt_str("MASTER"));
-					for(int j=0;j<i;j++){
+					char t[100] = "MASTER";
+					fprintf(fp , "%s\n" , encrypt_str(t));
+					for(int j=1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
 					fclose(fp);
 					printf("Done");
 				}
-				else if(string_cmp(decrypt_str(tmp[0]) , "MASTER")){
+				else if(strcmp(tmp[0] , "SGYZKX") == 0){
 					printf("This user is the Master.");
 				}
 				else{
 					fp = fopen(file_name , "w");
-					fprintf(fp , "%s\n" , encrypt_str("ADMIN"));
-					for(int j=1;j<i;j++){
+					char t[100] = "ADMIN";
+					fprintf(fp , "%s\n" , encrypt_str(t));
+					for(int j=0;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
 					fclose(fp);
@@ -431,7 +438,7 @@ void admin_page(){
 					i++;
 				}
 				fclose(fp);
-				if(string_cmp(decrypt_str(tmp[0]) , "ADMIN")){
+				if(strcmp(tmp[0] , "GJSOT") == 0){
 					fp = fopen(filename , "w");
 					for(int j = 1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
@@ -440,9 +447,10 @@ void admin_page(){
 					printf("Done");
 					Sleep(1000);
 				}
-				else if(string_cmp(decrypt_str(tmp[0]) , "MASTER")){
+				else if(strcmp(tmp[0] , "SGYZKX") == 0){
 					fp = fopen(filename , "w");
-					fprintf(fp , "%s\n" , encrypt_str("ADMIN"));
+					char t[100] = "ADMIN";
+					fprintf(fp , "%s\n" , encrypt_str(t));
 					for(int j = 1;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
 					}
@@ -479,6 +487,7 @@ bool string_cmp(char s1[] , char s2[]){
 	int len , i;
 	int l1 = strlen(s1);
 	int l2 = strlen(s2);
+	//printf("%d" , l1);
 	if(l1 > l2){
 		len = l2;
 	}
@@ -597,25 +606,22 @@ bool login(){
 	
 	FILE *file = fopen(file_name , "r");
 	char comfirm_password[105];
-	fgets(comfirm_password , 100 , file);
-	
-	if(string_cmp(decrypt_str(comfirm_password) , "ADMIN")){
-		fgets(comfirm_password , 100 , file);
+	fscanf(file , "%s\n" , comfirm_password);
+	//puts(comfirm_password);
+	if(strcmp(comfirm_password , "GJSOT") == 0){
+		fscanf(file , "%s\n" , comfirm_password);
 		decrypt_str(comfirm_password);
 		admin_checked = true;
 	}
-	else if(string_cmp(decrypt_str(comfirm_password) , "MASTER")){
+	else if(strcmp(comfirm_password , "SGYZKX") == 0){
+		//puts(decrypt_str(comfirm_password));
 		admin_checked = true;
 		master_comfirm = true;
-		fgets(comfirm_password , 100 , file);
+		fscanf(file , "%s\n" , comfirm_password);
 		decrypt_str(comfirm_password);
 	}
-	//printf("%s %s\n" , password , comfirm_password);
-	/*for(int i=0;i<2;i++){
-		if(password[i] != comfirm_password[i]){
-			printf("%d" , i);
-		}
-	}*/
+	//puts(comfirm_password);
+	//getch();
 	if(!string_cmp(password , comfirm_password)){
 		admin_checked = false;
 		printf("Wrong password!!\n");
@@ -777,35 +783,19 @@ MAP map_driver(int code , PLAYER player){
 		fscanf(file , "\n");
 	}
 	fclose(file);
-	/*for(i = 0 ; i<lim_i ; i++){
-		for(j=0;j<lim_j ; j++){
-			printf("%d" , core_lv_divide[i][j]);
-		}
-		printf("\n");
-	}
-	pause;
-	cls;*/
 	MAP re;
 	re.x = lim_i;
 	re.y = lim_j;
-	switch(code){
-		case 2:
-			printf("Loading to Mining area...\n");
-			Sleep(500);
-			//cls;
-			break;
-		case 3:
-			printf("Loading to Hunting area...\n");
-			Sleep(500);
-			//cls;
-			break;
-	}
 	strcpy(play_map[lim_i+1] , "T: Command Prompt");
 	strcpy(play_map[lim_i+2] , "P: Save the game");
 	strcpy(play_map[lim_i+3] , "I: Open player information");
 	strcpy(play_map[lim_i+4] , "M: Mission System");
 	strcpy(play_map[lim_i+5] , "O: Skill Points");
 	strcpy(play_map[lim_i+6] , "Q: Setting");
+	if(mode == 2) {
+		printf("Loading...\n");
+		Sleep(500);
+	}
 	re.x+=7;
 	return re;
 }
@@ -817,6 +807,10 @@ void map_runner(MAP information , PLAYER player){
 		for(j = 0 ; j < information.y;j++){
 			if(j == player.x && i == player.y){
 				putchar(main_character);
+			}
+			else if(mode == 2 && i == information.x - 6 && j >= 20){
+				printf("\tPlayer Health:%d" , player_health);
+				break;
 			}
 			else{
 				printf("%c" , play_map[i][j]);
@@ -858,8 +852,13 @@ void updater(PLAYER player){
 	}
 	fclose(file);
 	file = fopen(file_name , "w");
-	if(admin_checked){
-		fprintf(file , "%s\n" , encrypt_str("ADMIN"));
+	if(master_comfirm){
+		char t[100] = "MASTER";
+		fprintf(file , "%s\n" , encrypt_str(t));
+	}
+	else if(admin_checked){
+		char t[100] = "ADMIN";
+		fprintf(file , "%s\n" , encrypt_str(t));
 	}
 	fprintf(file , "%s%s\n" , password , encrypt_int(player.lv));
 	for(i=0;i<26;i++){
@@ -1506,10 +1505,10 @@ int new_mining(PLAYER player){
 	return sum;
 }
 
-bool getinto_event(PLAYER player){
+int getinto_event(PLAYER player , int type , int player_health){
 	srand(time(NULL));
 	
-	if(mode == 2){  //mining
+	if(type == 2){  //mining
 		play_map[player.y][player.x] = ' ';
 		int s = new_mining(player);
 		int a = rand()%ore_in_each_lv[core_lv_divide[player.y][player.x]];
@@ -1524,10 +1523,10 @@ bool getinto_event(PLAYER player){
 		}
 		gotoxy(60 ,10);
 		printf("You have got %d %s\n" , s , ore_code[i]);
-		
 		Sleep(1500);
+		return 0;
 	}
-	else if(mode == 3){
+	else if(type== 3){
 		printf("\t\t\t\tpress Y to ready..");
 		char cmd;
 		do{
@@ -1538,10 +1537,11 @@ bool getinto_event(PLAYER player){
 		Sleep(100);
 		cls;
 		int max_str_length = 5;  //max generate string length
-		int max_damage = player.health * 0.5 + player.defence; //max damage monster can hit
+		int max_damage = player.health * 0.5 + player.defence * 0.7; //max damage monster can hit
 		int i , j;
 		int monster_health = rand()%player.weapon_val * 3 + player.weapon_val * 2;
 		
+		player.health = player_health;
 		player.weapon_val+=skillpoint[1]*2;
 		player.health += skillpoint[2]*5;
 		player.defence += skillpoint[3]*2;
@@ -1549,7 +1549,7 @@ bool getinto_event(PLAYER player){
 		int crit_chance = min(40 , (int)(pow(crit_constant , skillpoint[4]) * 10));
 		cls;
 		gotoxy(65 , 10);
-		printf("Health:%d" , player.health);
+		printf("Health:%d" , max(player.health , 0));
 		gotoxy(65 , 11);
 		printf("Monster Health:%d" , max(monster_health , 0));
 		gotoxy(65 , 12);
@@ -1561,7 +1561,7 @@ bool getinto_event(PLAYER player){
 			int damage = 0;
 			bool crit = false;
 			if(k.hurt){
-				damage = (rand()%max_damage + 1);
+				damage = (rand()%max_damage + player.defence * 0.3);
 				//printf("%d\n" , damage);
 				//pause;
 				damage-= player.defence;
@@ -1577,7 +1577,7 @@ bool getinto_event(PLAYER player){
 			}
 			cls;
 			gotoxy(65 , 10);
-			printf("Health:%d" , player.health);
+			printf("Health:%d" , max(player.health , 0));
 			gotoxy(65 , 11);
 			printf("Monster Health:%d" , max(monster_health , 0));
 			gotoxy(65 , 12);
@@ -1595,15 +1595,16 @@ bool getinto_event(PLAYER player){
 			cls;
 		}
 		cls;
-		bool re = false;
+		int re;
 		if(monster_health <= 0){
 			printf("The monster is defeated.....\n");
 			total_monster_kill++;
 			monster_counting++;
-			re = true;
+			re = player.health;
 		}
 		else{
 			printf("You are defeated....");
+			re = -1;
 		}
 		getch();
 		return re;
@@ -1748,7 +1749,7 @@ void trading(PLAYER player){
 	return;
 }
 
-void mission(PLAYER player){
+void mission(PLAYER* player){
 	FILE *fp;
 	char filename[1005];
 	strcpy(filename , player_ac);
@@ -1849,6 +1850,8 @@ void mission(PLAYER player){
 			Sleep(1000);
 			return ;
 		}
+		double base = 1.00695555;
+		(*player).lv += quantity * lv_of_ore[input_ore_code] * min((int)pow(base , skillpoint[4]) , 3);
 		int new_quty = rand()%10 + 1;
 		int new_code = rand()%type_of_core + 1;
 		fp = fopen(filename , "w");
@@ -1859,7 +1862,7 @@ void mission(PLAYER player){
 		fclose(fp);
 		cls;
 		alp[0]+=10;
-		updater(player);
+		updater(*player);
 		puts("Submitted");
 		pause;
 	}
@@ -1874,7 +1877,7 @@ void mission(PLAYER player){
 			fprintf(fp , "\n%s\n%s\n%s" , encrypt_int(quantity) , encrypt_int(input_ore_code ), encrypt_int(rand()%10 + 1));
 			fclose(fp);
 			alp[0]+=10;
-			updater(player);
+			updater(*player);
 			puts("Submitted");
 			pause;
 		}
@@ -2035,10 +2038,10 @@ void setting(PLAYER player){
 					fclose(fp);
 					fp = fopen(str , "w");
 					if(check_admin(player_ac)){
-						strcpy(tmp[1] , new_password);
+						strcpy(tmp[1] , encrypt_str(new_password));
 					}
 					else{
-						strcpy(tmp[0] , new_password);
+						strcpy(tmp[0] ,encrypt_str(new_password));
 					}
 					for(int j=0;j<i;j++){
 						fprintf(fp , "%s\n" , tmp[j]);
@@ -2117,6 +2120,8 @@ int main(){
 	MAP map_information = map_driver(1 , player); //load map to the 2D array
 	map_runner(map_information , player);  // output the map to screen
 	
+	player_health = player.health;
+	
 	while(command_code){
 		int map_player_x = player.x, map_player_y = player.y;
 		bool first_into_map = false;
@@ -2130,9 +2135,7 @@ int main(){
 			first_into_map = false;
 		}
 		
-		/*if(move_cmd == 'm'){
-			admin_page();
-		}*/
+		
 		
 		if(move_cmd == up){
 			if(play_map[player.y - 1][player.x] == ' '){
@@ -2153,41 +2156,20 @@ int main(){
 			else if(play_map[player.y - 1][player.x] == '.'){
 				player.y--;
 				cls;
-				getinto_event(player);
+				getinto_event(player , 2 , 0);
+				random = 0;
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y - 1][player.x] == 'C'){  //choosing what area to go
 				cls;
-				int select = choose_area();
-				if(select == 1){  //mining
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(2 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-				}
-				else if(select == 2){  //hunting
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(3 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-					/*cls;
-					printf("Developing..");
-					Sleep(500);
-					cls;
-					map_runner(map_information , player);*/
-				}
-				else{
-					cls;
-					map_runner(map_information , player);
-				}
+				saver.x = player.x;
+				saver.y = player.y;
+				player.x = 10;
+				player.y = 10;
+				map_information = map_driver(2 , player);
+				player_health = player.health;
+				map_runner(map_information , player);
+				first_into_map = true;
 			}
 			else if(play_map[player.y - 1][player.x] == 'O'){ //going back to main hall
 				player.x = saver.x;
@@ -2217,41 +2199,19 @@ int main(){
 			else if(play_map[player.y + 1][player.x] == '.'){
 				player.y++;
 				cls;
-				getinto_event(player);
+				getinto_event(player , 2 , 0);
+				random = 0;
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y + 1][player.x] == 'C'){  //choosing what area to go
 				cls;
-				int select = choose_area();
-				if(select == 1){  //mining
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(2 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-				}
-				else if(select == 2){  //hunting
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(3 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-					/*cls;
-					printf("Developing..");
-					Sleep(500);
-					cls;
-					map_runner(map_information , player);*/
-				}
-				else{
-					cls;
-					map_runner(map_information , player);
-				}
+				saver.x = player.x;
+				saver.y = player.y;
+				player.x = 10;
+				player.y = 10;
+				map_information = map_driver(2 , player);
+				map_runner(map_information , player);
+				first_into_map = true;
 			}
 			else if(play_map[player.y + 1][player.x] == 'O'){ //going back to main hall
 				player.x = saver.x;
@@ -2281,41 +2241,19 @@ int main(){
 			else if(play_map[player.y][player.x - 1] == '.'){
 				player.x--;
 				cls;
-				getinto_event(player);
+				getinto_event(player , 2 , 0);
+				random = 0;
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x - 1] == 'C'){  //choosing what area to go
 				cls;
-				int select = choose_area();
-				if(select == 1){  //mining
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(2 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-				}
-				else if(select == 2){  //hunting
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(3 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-					/*cls;
-					printf("Developing..");
-					Sleep(500);
-					cls;
-					map_runner(map_information , player);*/
-				}
-				else{
-					cls;
-					map_runner(map_information , player);
-				}
+				saver.x = player.x;
+				saver.y = player.y;
+				player.x = 10;
+				player.y = 10;
+				map_information = map_driver(2 , player);
+				map_runner(map_information , player);
+				first_into_map = true;
 			}
 			else if(play_map[player.y][player.x - 1] == 'O'){ //going back to main hall
 				player.x = saver.x;
@@ -2347,43 +2285,19 @@ int main(){
 			else if(play_map[player.y][player.x + 1] == '.'){
 				player.x++;
 				cls;
-				getinto_event(player);
+				getinto_event(player , 2 , 0);
+				random = 0;
 				map_runner(map_information , player);
 			}
 			else if(play_map[player.y][player.x + 1] == 'C'){  //choosing what area to go
 				cls;
-				int select = choose_area();
-				if(select == 1){  //mining
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(2 , player);
-					map_runner(map_information , player);
-					first_into_map = true;
-				}
-				else if(select == 2){  //hunting
-					cls;
-					saver.x = player.x;
-					saver.y = player.y;
-					player.x = 10;
-					player.y = 10;
-					map_information = map_driver(3 , player);
-					
-					map_runner(map_information , player);
-					first_into_map = true;
-					/*cls;
-					printf("Developing..");
-					Sleep(500);
-					cls;
-					map_runner(map_information , player);*/
-				}
-				else{
-					cls;
-					map_runner(map_information , player);
-					first_into_map = true;
-				}
+				saver.x = player.x;
+				saver.y = player.y;
+				player.x = 10;
+				player.y = 10;
+				map_information = map_driver(2 , player);
+				map_runner(map_information , player);
+				first_into_map = true;
 			}
 			else if(play_map[player.y][player.x + 1] == 'O'){ //going back to main hall
 				player.x = saver.x;
@@ -2436,7 +2350,7 @@ int main(){
 		}
 		else if(move_cmd == 'M' || move_cmd == 'm'){
 			cls;
-			mission(player);
+			mission(&player);
 			cls;
 			map_runner(map_information , player);
 		}
@@ -2453,17 +2367,20 @@ int main(){
 			map_runner(map_information , player);
 		}
 		if(move_cmd == 's' || move_cmd == 'S' || move_cmd == 'W' || move_cmd == 'w' || move_cmd == 'A' || move_cmd == 'a' || move_cmd == 'd' || move_cmd == 'D'){
-			if(random >= random_chance && mode == 3 && !first_into_map){
-				/*cls;
-				printf("getting into event %d\n" , mode);
-				Sleep(500);*/
+			if(random >= random_chance && mode == 2 && !first_into_map){
 				cls;
-				/*printf("%d" , mode);
-				pause;*/
-				bool re = getinto_event(player);
+				player_health = getinto_event(player , 3 , player_health);
 				cls;
-				if(re){
-					player = exp_up(player , 50 + skillpoint[4] * 5);
+				if(player_health > 0){
+					double base = 1.00695555;
+					player = exp_up(player , 50 * min((int)pow(base , skillpoint[4]) , 5));
+				}
+				else{
+					player.x = saver.x;
+					player.y = saver.y;
+					map_information = map_driver(1 , player);
+					cls;
+					first_into_map = true;
 				}
 				map_runner(map_information , player);
 			}
