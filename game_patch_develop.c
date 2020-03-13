@@ -9,6 +9,7 @@
 #include<wchar.h>
 #include <stdarg.h>
 #include<unistd.h>
+#include<limits.h>
 #include "Encryption.h"
 #define cls system("cls");
 #define pause system("pause");
@@ -130,7 +131,7 @@ void string_input(char *str , int max_len , bool hide){
 			pt--;
 			printf("\b \b");
 		}
-		else if(ch != '\b' && ch != '\n' && ch != '\r' && max_len > pt){
+		else if(ch != ' ' && ch != '\b' && ch != '\n' && ch != '\r' && max_len > pt){
 			str[pt] = ch;
 			pt++;
 			if(hide) putchar('*');
@@ -144,7 +145,7 @@ void string_input(char *str , int max_len , bool hide){
 
 int find_lv(int v){
 	v = v / 100;
-	float a = (-1 + sqrt(1 + 8 * v))/2; //quard equation
+	float a = (-1 + sqrt(1 + 8 * v))/2; //quard equation MAX_LV = 6553
 	int re = a;
 	return re;
 }
@@ -312,10 +313,17 @@ void admin_page(){
 			char name[10005];
 			printf("Please input a player username:");
 			scanf("%s" , name);
-			char s1[10005] , s[10005];
+			if(strcmp(name , player_ac) == 0){
+				puts("Cannot be yourself");
+				pause;
+				cls;
+				continue;
+			}
+			char s1[10005] , s[10005] , s2[10005];
 			strcpy(s, name);
 			strcpy(s1 , name);
 			strcat(s1 , "_2.txt");
+			sprintf(s2,"setting_%s.txt" , name);
 			strcat(s , ".txt");
 			if(access(s , F_OK) == -1){
 				printf("No such player\n");
@@ -325,7 +333,8 @@ void admin_page(){
 			}
 			int k = remove(s);
 			int p = remove(s1);
-			if(k == 0 && p == 0){
+			int g = remove(s2);
+			if(k == 0 && p == 0 && g == 0){
 				FILE *fp;
 				fp = fopen("player_list.txt" , "r");
 				char lt[10000][105];
@@ -476,6 +485,9 @@ void admin_page(){
 PLAYER exp_up(PLAYER player , int v){
 	int a = find_lv(player.lv);
 	player.lv += v;
+	player.lv = min(INT_MAX , player.lv);
+	player.lv = max(0 , player.lv);
+	
 	int b = find_lv(player.lv);
 	player.defence += max(b - a , 0)*10;
 	player.health += max(b - a , 0) * 30;
@@ -569,7 +581,7 @@ void register_f(){
 	fclose(file);
 	FILE *fp;
 	fp = fopen("player_list.txt" , "a");
-	fprintf(fp , "\n%s" , user_name);
+	fprintf(fp , "%s\n" , user_name);
 	fclose(fp);
 	
 	char setting[1005];
@@ -610,7 +622,6 @@ bool login(){
 	//puts(comfirm_password);
 	if(strcmp(comfirm_password , "GJSOT") == 0){
 		fscanf(file , "%s\n" , comfirm_password);
-		decrypt_str(comfirm_password);
 		admin_checked = true;
 	}
 	else if(strcmp(comfirm_password , "SGYZKX") == 0){
@@ -618,11 +629,10 @@ bool login(){
 		admin_checked = true;
 		master_comfirm = true;
 		fscanf(file , "%s\n" , comfirm_password);
-		decrypt_str(comfirm_password);
 	}
 	//puts(comfirm_password);
 	//getch();
-	if(!string_cmp(password , comfirm_password)){
+	if(!string_cmp(decrypt_str(comfirm_password) , comfirm_password)){
 		admin_checked = false;
 		printf("Wrong password!!\n");
 		Sleep(500);
@@ -1205,11 +1215,17 @@ CI new_combat_2(PLAYER player){
 	for(int i=0;i<3;i++){
 		putchar(' ');
 	}
-	//start play
-	int x = 65 , y = 7;
+	
+	
 	double dur = find_lv(player.lv) * -0.0075 + 0.35;
 	if(!cheatison) dur = max(0.2 , dur);
 	else dur = max(0.15 , dur);
+	
+	gotoxy(55 , 5);
+	printf("Speed %.3lf s per drop" , dur);
+	
+	//start play
+	int x = 65 , y = 7;
 	CI re;
 	re.hurt = false;
 	gotoxy(x , y);
@@ -1422,7 +1438,7 @@ int new_mining(PLAYER player){
 		if(!cheatison) dur = 0.2;
 		else dur = max(0.1 , find_lv(player.lv) * -0.0075 + 0.2);
 		gotoxy(60 , 6);
-		printf("Round: %d  Speed: %lf" , i + 1 , dur);
+		printf("Round: %d  Speed: %.3lf s per drop" , i + 1 , dur);
 		struct timeval st , end;
 		gotoxy(x , y);
 		putchar('&');
@@ -1510,7 +1526,7 @@ int getinto_event(PLAYER player , int type , int player_health){
 	
 	if(type == 2){  //mining
 		play_map[player.y][player.x] = ' ';
-		int s = new_mining(player);
+		int s = new_mining(player) + skillpoint[4] * 0.2;
 		int a = rand()%ore_in_each_lv[core_lv_divide[player.y][player.x]];
 		int i;
 		cls;
@@ -1537,9 +1553,11 @@ int getinto_event(PLAYER player , int type , int player_health){
 		Sleep(100);
 		cls;
 		int max_str_length = 5;  //max generate string length
-		int max_damage = player.health * 0.5 + player.defence * 0.7; //max damage monster can hit
+		int max_damage = player.health * 1.5 + player.defence * 0.5; //max damage monster can hit
+		if(cheatison) max_damage *= 2;
 		int i , j;
-		int monster_health = rand()%player.weapon_val * 3 + player.weapon_val * 2;
+		int monster_health = rand()%player.weapon_val * 5 + player.weapon_val * 2;
+		if(cheatison) monster_health *= 1.3;
 		
 		player.health = player_health;
 		player.weapon_val+=skillpoint[1]*2;
@@ -1561,9 +1579,8 @@ int getinto_event(PLAYER player , int type , int player_health){
 			int damage = 0;
 			bool crit = false;
 			if(k.hurt){
-				damage = (rand()%max_damage + player.defence * 0.3);
-				//printf("%d\n" , damage);
-				//pause;
+				damage = (rand()%max_damage + player.defence * 0.5);
+				if(cheatison) damage *= 2;
 				damage-= player.defence;
 				damage = max(0 , damage);
 				player.health -= damage;
@@ -1614,9 +1631,9 @@ int getinto_event(PLAYER player , int type , int player_health){
 
 void open_information(PLAYER player){
 	printf("\t\t Your information:\n");
-	printf("\t\tHealth:%d\n" , player.health);
-	printf("\t\tStrength:%d\n" , player.weapon_val);
-	printf("\t\tArmor:%d\n" , player.defence);
+	printf("\t\tHealth:%d (%d + %d)\n" , player.health + skillpoint[2] * 5, player.health , skillpoint[2] * 5);
+	printf("\t\tStrength:%d  (%d + %d)\n" , player.weapon_val + skillpoint[1] * 2 , player.weapon_val , skillpoint[1] * 2);
+	printf("\t\tArmor:%d (%d + %d)\n" , player.defence + skillpoint[3] * 2 , player.defence , skillpoint[3] * 2);
 	printf("\t\tLevel:%d\n" , find_lv(player.lv));
 	printf("\t\tEXP:%d\n" , player.lv);
 	printf("\t\tTotal monster you have killed:%d\n" , total_monster_kill);
@@ -1711,6 +1728,8 @@ void ENDING(PLAYER player){
 }
 
 void trading(PLAYER player){
+	int  traderate = 10;
+	if(cheatison) traderate = 100;
 	while(1){
 		cls;
 		char input;
@@ -1725,8 +1744,8 @@ void trading(PLAYER player){
 			int in;
 			printf("How many you want to trade:");
 			scanf("%d" , &in);
-			if(alp[input - 'a' - 1] >= 10 * in){
-				alp[input - 'a' - 1] -= 10 * in;
+			if(alp[input - 'a' - 1] >= traderate * in){
+				alp[input - 'a' - 1] -= traderate * in;
 				alp[input - 'a' ]+=in;
 				printf("Done");
 				Sleep(500);
@@ -2062,8 +2081,8 @@ int main(){
 	//initiallize
 	srand(time(NULL));
 	
-	char consoletitle[200] = "Just Collect";
-	SetConsoleTitle((wchar_t*)consoletitle);
+	//char consoletitle[200] = "Just Collect";
+	SetConsoleTitle("Just Collect");
 	
 	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD sizeOfBuff;
@@ -2073,32 +2092,14 @@ int main(){
 	HWND hwnd = GetConsoleWindow();
 	if( hwnd != NULL ){ SetWindowPos(hwnd ,0,0,0 ,1200,620 ,SWP_SHOWWINDOW|SWP_NOMOVE); }
 	
-	/*int count = 0;
-	clock_t start = clock();
-	while(count <= 1e4){
-		if(kbhit()){
-			
-		}
-		count++;
-	}
-	float g = (float)(clock() - start);
-	time_taken_in_1e4 = (g/CLOCKS_PER_SEC);*/
 	
-	if(access( "cheatison.txt", F_OK ) != -1 ){
-		FILE *fp = fopen("cheatison.txt" , "r");
+	if(access( "CRAZY.txt", F_OK ) != -1 ){
+		FILE *fp = fopen("CRAZY.txt" , "r");
 		int a;
 		fscanf(fp , "%d" , &a);
 		fclose(fp);
 		if(a == 1){
 			cheatison = true;
-			/*mode = 3;
-			PLAYER player;
-			player.defence = 10;
-			player.weapon_val = 100;
-			player.health = 100;
-			player.lv = 100000;
-			getinto_event(player);
-			return 0;*/
 		}
 	}
 	
@@ -2210,6 +2211,7 @@ int main(){
 				player.x = 10;
 				player.y = 10;
 				map_information = map_driver(2 , player);
+				player_health = player.health;
 				map_runner(map_information , player);
 				first_into_map = true;
 			}
@@ -2252,6 +2254,7 @@ int main(){
 				player.x = 10;
 				player.y = 10;
 				map_information = map_driver(2 , player);
+				player_health = player.health;
 				map_runner(map_information , player);
 				first_into_map = true;
 			}
@@ -2296,6 +2299,7 @@ int main(){
 				player.x = 10;
 				player.y = 10;
 				map_information = map_driver(2 , player);
+				player_health = player.health;
 				map_runner(map_information , player);
 				first_into_map = true;
 			}
