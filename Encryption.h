@@ -4,7 +4,6 @@
 #include<string.h>
 #include<math.h>
 #define gold_key 553
-#define gold_key_str 549  //1317795 mod 553
 
 char *encrypt_int(int a){  // this is for encrypt integer only
 	a ^= gold_key;  //hash by gold key
@@ -71,21 +70,17 @@ int decrypt_int(char str[]){  // this is for decrypt integer only
 }
 
 char *encrypt_str(char *s){
-	srand(time(NULL));
-	int l = strlen(s);
-	int i;
-	for(i=0;i<l;i++){
-		s[i] ^= gold_key_str;
+	int k = strlen(s);
+	for(int i=0;i<k;i++){
+		s[i] += 6;
 	}
 	return s;
 }
 
 char *decrypt_str(char *s){
-	srand(time(NULL));
-	int l = strlen(s);
-	int i;
-	for(i=0;i<l;i++){
-		s[i] ^= gold_key_str;
+	int k = strlen(s);
+	for(int i=0;i<k;i++){
+		s[i] -= 6;
 	}
 	return s;
 }
