@@ -3,4 +3,5 @@ Collect ore and kill monster
 Finish mission and gain letters  
 Collect 10 'Z' to finish the game
 
-Dev. End on 30/9/2020
+Dev. End at 30/9/2020
+
