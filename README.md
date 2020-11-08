@@ -5,3 +5,4 @@ Collect 10 'Z' to finish the game
 
 Dev. End at 30/9/2020
 
+compile cmd gcc game_patch_develop.c -std=c99 -o Just_Collect
